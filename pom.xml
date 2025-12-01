@@ -28,6 +28,7 @@
         <spring-cloud.version>2023.0.0</spring-cloud.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <lombok.version>1.18.30</lombok.version>
+        <flyway.version>10.4.1</flyway.version>
     </properties>
 
     <modules>
