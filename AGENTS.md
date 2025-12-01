@@ -353,4 +353,18 @@ After Terraform apply finishes, agent must:
 
 ---
 
+
+🟦 Phase X — GitHub Actions Monitoring & Reporting
+
+Agent must automatically:
+
+✔️ Fetch latest workflow run
+✔️ Parse logs
+✔️ Detect failures
+✔️ Detect success
+✔️ Summarize results back to user
+✔️ Suggest fixes
+✔️ Trigger re-runs (optional)
+
+
 # ▶️ The agent may now immediately begin following Phase 0.
