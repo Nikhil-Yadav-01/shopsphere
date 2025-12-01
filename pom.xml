@@ -37,6 +37,11 @@
         <module>common-security</module>
         <module>common-kafka</module>
         <module>common-db</module>
+        <module>services/discovery</module>
+        <module>services/config-server</module>
+        <module>services/api-gateway</module>
+        <module>services/auth-service</module>
+        <module>services/user-service</module>
     </modules>
 
     <dependencyManagement>
