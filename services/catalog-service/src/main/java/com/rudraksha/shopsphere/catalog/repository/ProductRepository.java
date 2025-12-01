@@ -1,0 +1,36 @@
+package com.rudraksha.shopsphere.catalog.repository;
+
+import com.rudraksha.shopsphere.catalog.entity.Product;
+import com.rudraksha.shopsphere.catalog.entity.Product.ProductStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface ProductRepository extends MongoRepository<Product, String> {
+
+    Optional<Product> findBySku(String sku);
+
+    Page<Product> findByCategoryId(String categoryId, Pageable pageable);
+
+    Page<Product> findBySellerId(String sellerId, Pageable pageable);
+
+    Page<Product> findByStatus(ProductStatus status, Pageable pageable);
+
+    Page<Product> findByCategoryIdAndStatus(String categoryId, ProductStatus status, Pageable pageable);
+
+    @Query("{ 'name': { $regex: ?0, $options: 'i' } }")
+    Page<Product> searchByName(String name, Pageable pageable);
+
+    @Query("{ $or: [ { 'name': { $regex: ?0, $options: 'i' } }, { 'description': { $regex: ?0, $options: 'i' } } ] }")
+    Page<Product> searchByKeyword(String keyword, Pageable pageable);
+
+    List<Product> findByCategoryIdIn(List<String> categoryIds);
+
+    boolean existsBySku(String sku);
+}
