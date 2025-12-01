@@ -7,11 +7,12 @@ import com.rudraksha.shopsphere.payment.dto.response.RefundResponse;
 import com.rudraksha.shopsphere.payment.entity.Payment;
 import com.rudraksha.shopsphere.payment.entity.Refund;
 import com.rudraksha.shopsphere.payment.events.producer.PaymentEventProducer;
+import com.rudraksha.shopsphere.payment.exception.PaymentNotFoundException;
+import com.rudraksha.shopsphere.payment.exception.InvalidPaymentStateException;
 import com.rudraksha.shopsphere.payment.gateway.PaymentGateway;
 import com.rudraksha.shopsphere.payment.repository.PaymentRepository;
 import com.rudraksha.shopsphere.payment.repository.RefundRepository;
 import com.rudraksha.shopsphere.payment.service.PaymentService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -73,7 +74,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional(readOnly = true)
     public PaymentResponse getPayment(UUID paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new EntityNotFoundException("Payment not found: " + paymentId));
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found: " + paymentId));
         return PaymentResponse.fromEntity(payment);
     }
 
@@ -91,10 +92,20 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Processing refund for paymentId={}, amount={}", paymentId, request.getAmount());
 
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new EntityNotFoundException("Payment not found: " + paymentId));
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found: " + paymentId));
 
         if (payment.getStatus() != Payment.PaymentStatus.COMPLETED) {
-            throw new IllegalStateException("Cannot refund payment with status: " + payment.getStatus());
+            throw new InvalidPaymentStateException(
+                    "Cannot refund payment with status: " + payment.getStatus(),
+                    payment.getStatus().toString(),
+                    "REFUND");
+        }
+
+        if (payment.getTransactionId() == null) {
+            throw new InvalidPaymentStateException(
+                    "Payment has no transaction ID for refund",
+                    payment.getStatus().toString(),
+                    "REFUND");
         }
 
         Refund refund = Refund.builder()
@@ -111,7 +122,7 @@ public class PaymentServiceImpl implements PaymentService {
                 request.getAmount()
         );
 
-        if (result.success()) {
+        if (result != null && result.success()) {
             refund.setStatus(Refund.RefundStatus.COMPLETED);
             payment.setStatus(Payment.PaymentStatus.REFUNDED);
             paymentRepository.save(payment);

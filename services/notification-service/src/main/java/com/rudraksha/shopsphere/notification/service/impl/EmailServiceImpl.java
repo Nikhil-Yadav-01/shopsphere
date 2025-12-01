@@ -12,6 +12,6 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendEmail(EmailRequest request) {
         log.info("Sending email to: {} with subject: {}", request.getTo(), request.getSubject());
-        log.info("Email body: {}", request.getBody());
+        log.debug("Email sent successfully for recipient: {}", request.getTo());
     }
 }
