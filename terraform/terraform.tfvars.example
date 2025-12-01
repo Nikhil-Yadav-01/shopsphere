@@ -1,0 +1,52 @@
+# Example Terraform Variables
+# Copy this file to terraform.tfvars and fill in with your values
+
+aws_region = "us-east-1"
+environment = "dev"  # dev, staging, or prod
+app_name = "shopsphere"
+
+# VPC Configuration
+vpc_cidr = "10.0.0.0/16"
+
+# Database Configuration
+postgres_username = "shopsphere"
+postgres_password = "YOUR_SECURE_POSTGRES_PASSWORD_HERE"  # Minimum 16 characters
+postgres_version = "16.1"
+
+mongo_username = "shopsphere"
+mongo_password = "YOUR_SECURE_MONGO_PASSWORD_HERE"  # Minimum 16 characters
+
+# EC2 Configuration
+instance_type = "t3.medium"
+
+# Auto Scaling Configuration
+min_capacity = 2
+max_capacity = 4
+
+# Security
+jwt_secret = "YOUR_JWT_SECRET_HERE_MINIMUM_32_CHARACTERS"  # Minimum 32 characters
+
+# Stripe Configuration (Optional)
+stripe_api_key = "sk_test_YOUR_STRIPE_API_KEY"
+stripe_webhook_secret = "whsec_YOUR_STRIPE_WEBHOOK_SECRET"
+
+# Database Strategy
+enable_rds = true           # Use RDS for PostgreSQL
+enable_documentdb = false   # Use DocumentDB for MongoDB (AWS-managed)
+
+# Monitoring and Backups
+enable_monitoring = true
+enable_backup = true
+backup_retention_days = 7
+
+# Security: Restrict SSH access
+allowed_ssh_cidr = ["YOUR_IP_ADDRESS/32"]  # Example: ["203.0.113.42/32"]
+
+# Tags
+tags = {
+  Project     = "ShopSphere"
+  ManagedBy   = "Terraform"
+  CreatedDate = "2025-12-01"
+  Owner       = "Your Name"
+  CostCenter  = "Engineering"
+}
