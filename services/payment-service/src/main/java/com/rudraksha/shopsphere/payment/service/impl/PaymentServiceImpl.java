@@ -215,7 +215,18 @@ public class PaymentServiceImpl implements PaymentService {
                 "HmacSHA256");
         mac.init(secretKeySpec);
         byte[] bytes = mac.doFinal(message.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        return javax.xml.bind.DatatypeConverter.printHexBinary(bytes).toLowerCase();
+        return bytesToHex(bytes);
+    }
+
+    /**
+     * Convert bytes to hex string.
+     */
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 
     /**
