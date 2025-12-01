@@ -57,10 +57,14 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         String userId = jwtTokenProvider.getUserIdFromToken(token);
         List<String> roles = jwtTokenProvider.getRolesFromToken(token);
 
-        ServerHttpRequest modifiedRequest = request.mutate()
-                .header("X-User-Id", userId)
-                .header("X-User-Roles", String.join(",", roles))
-                .build();
+        ServerHttpRequest.Builder requestBuilder = request.mutate()
+                .header("X-User-Id", userId);
+        
+        if (roles != null && !roles.isEmpty()) {
+            requestBuilder.header("X-User-Roles", String.join(",", roles));
+        }
+        
+        ServerHttpRequest modifiedRequest = requestBuilder.build();
 
         return chain.filter(exchange.mutate().request(modifiedRequest).build());
     }

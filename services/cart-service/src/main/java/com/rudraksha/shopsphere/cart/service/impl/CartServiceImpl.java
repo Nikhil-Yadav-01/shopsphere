@@ -38,9 +38,12 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartResponse addToCart(String userId, AddToCartRequest request) {
         var product = catalogClient.getProduct(request.getProductId());
+        if (product == null) {
+            throw new IllegalArgumentException("Product not found with id: " + request.getProductId());
+        }
+        
         var stock = inventoryClient.checkStock(request.getProductId(), request.getQuantity());
-
-        if (!stock.inStock()) {
+        if (stock == null || !stock.inStock()) {
             throw new IllegalStateException("Product is out of stock or insufficient quantity available");
         }
 

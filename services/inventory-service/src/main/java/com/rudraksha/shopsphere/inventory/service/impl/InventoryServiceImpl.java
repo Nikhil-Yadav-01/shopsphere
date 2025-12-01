@@ -7,6 +7,8 @@ import com.rudraksha.shopsphere.inventory.dto.response.StockCheckResponse;
 import com.rudraksha.shopsphere.inventory.entity.Inventory;
 import com.rudraksha.shopsphere.inventory.entity.StockMovement;
 import com.rudraksha.shopsphere.inventory.events.producer.InventoryEventProducer;
+import com.rudraksha.shopsphere.inventory.exception.InventoryNotFoundException;
+import com.rudraksha.shopsphere.inventory.exception.InsufficientStockException;
 import com.rudraksha.shopsphere.inventory.repository.InventoryRepository;
 import com.rudraksha.shopsphere.inventory.repository.StockMovementRepository;
 import com.rudraksha.shopsphere.inventory.service.InventoryService;
@@ -36,7 +38,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional(readOnly = true)
     public InventoryResponse getInventoryByProductId(UUID productId) {
         Inventory inventory = inventoryRepository.findByProductId(productId)
-                .orElseThrow(() -> new RuntimeException("Inventory not found for product: " + productId));
+                .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for product: " + productId));
         return mapToResponse(inventory);
     }
 
@@ -44,7 +46,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional
     public InventoryResponse updateStock(UUID productId, UpdateStockRequest request) {
         Inventory inventory = inventoryRepository.findByProductIdWithLock(productId)
-                .orElseThrow(() -> new RuntimeException("Inventory not found for product: " + productId));
+                .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for product: " + productId));
 
         int previousQuantity = inventory.getQuantity();
         int quantityChange = request.getQuantity() - previousQuantity;
@@ -85,11 +87,13 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional
     public InventoryResponse reserveStock(ReserveStockRequest request) {
         Inventory inventory = inventoryRepository.findByProductIdWithLock(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Inventory not found for product: " + request.getProductId()));
+                .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for product: " + request.getProductId()));
 
         if (!inventory.hasAvailableStock(request.getQuantity())) {
-            throw new RuntimeException("Insufficient stock for product: " + request.getProductId() +
-                    ". Available: " + inventory.getAvailableQuantity() + ", Requested: " + request.getQuantity());
+            throw new InsufficientStockException(
+                    "Insufficient stock for product: " + request.getProductId(),
+                    inventory.getAvailableQuantity(),
+                    request.getQuantity());
         }
 
         inventory.setReservedQuantity(inventory.getReservedQuantity() + request.getQuantity());
@@ -114,7 +118,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Transactional
     public InventoryResponse releaseStock(ReserveStockRequest request) {
         Inventory inventory = inventoryRepository.findByProductIdWithLock(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Inventory not found for product: " + request.getProductId()));
+                .orElseThrow(() -> new InventoryNotFoundException("Inventory not found for product: " + request.getProductId()));
 
         int newReservedQuantity = inventory.getReservedQuantity() - request.getQuantity();
         if (newReservedQuantity < 0) {
