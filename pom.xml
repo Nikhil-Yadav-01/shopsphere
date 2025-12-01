@@ -47,6 +47,9 @@
         <module>services/inventory-service</module>
         <module>services/order-service</module>
         <module>services/payment-service</module>
+        <module>services/pricing-service</module>
+        <module>services/checkout-service</module>
+        <module>services/notification-service</module>
     </modules>
 
     <dependencyManagement>
