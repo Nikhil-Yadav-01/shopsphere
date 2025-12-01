@@ -1,0 +1,338 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database (for transactional services)
+  postgres:
+    image: postgres:16-alpine
+    container_name: shopsphere-postgres
+    environment:
+      POSTGRES_USER: shopsphere
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: shopsphere
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql-migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shopsphere"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # MongoDB (for document storage)
+  mongodb:
+    image: mongo:7-alpine
+    container_name: shopsphere-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: shopsphere
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-mongodb}
+      MONGO_INITDB_DATABASE: shopsphere
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Kafka Message Broker
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: shopsphere-kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Zookeeper (required by Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: shopsphere-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Eureka Service Discovery
+  eureka:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: shopsphere-eureka
+    environment:
+      SPRING_APPLICATION_NAME: discovery
+      SERVICE_PORT: 8761
+      HEALTH_ENDPOINT: /eureka
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: shopsphere-gateway
+    environment:
+      SPRING_APPLICATION_NAME: api-gateway
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SERVICE_PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      eureka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Auth Service
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: shopsphere-auth
+    environment:
+      SPRING_APPLICATION_NAME: auth-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      SERVICE_PORT: 8001
+      JWT_SECRET: ${JWT_SECRET:-shopsphere-secret-key-change-in-production}
+    ports:
+      - "8001:8001"
+    depends_on:
+      eureka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - shopsphere-network
+
+  # Catalog Service (MongoDB)
+  catalog-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: shopsphere-catalog
+    environment:
+      SPRING_APPLICATION_NAME: catalog-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATA_MONGODB_URI: mongodb://shopsphere:${MONGO_PASSWORD:-mongodb}@mongodb:27017/shopsphere?authSource=admin
+      SERVICE_PORT: 8002
+    ports:
+      - "8002:8002"
+    depends_on:
+      eureka:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    networks:
+      - shopsphere-network
+
+  # Cart Service
+  cart-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: shopsphere-cart
+    environment:
+      SPRING_APPLICATION_NAME: cart-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SERVICE_PORT: 8003
+    ports:
+      - "8003:8003"
+    depends_on:
+      eureka:
+        condition: service_healthy
+    networks:
+      - shopsphere-network
+
+  # Inventory Service (PostgreSQL)
+  inventory-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: shopsphere-inventory
+    environment:
+      SPRING_APPLICATION_NAME: inventory-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      SERVICE_PORT: 8004
+    ports:
+      - "8004:8004"
+    depends_on:
+      eureka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - shopsphere-network
+
+  # Order Service (PostgreSQL + Kafka)
+  order-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: shopsphere-order
+    environment:
+      SPRING_APPLICATION_NAME: order-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVICE_PORT: 8005
+    ports:
+      - "8005:8005"
+    depends_on:
+      eureka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - shopsphere-network
+
+  # Payment Service (PostgreSQL)
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: shopsphere-payment
+    environment:
+      SPRING_APPLICATION_NAME: payment-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      SERVICE_PORT: 8006
+      STRIPE_API_KEY: ${STRIPE_API_KEY:-sk_test_}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_test_}
+    ports:
+      - "8006:8006"
+    depends_on:
+      eureka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - shopsphere-network
+
+  # Checkout Service
+  checkout-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: shopsphere-checkout
+    environment:
+      SPRING_APPLICATION_NAME: checkout-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SERVICE_PORT: 8007
+    ports:
+      - "8007:8007"
+    depends_on:
+      eureka:
+        condition: service_healthy
+    networks:
+      - shopsphere-network
+
+  # Notification Service (Kafka)
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: shopsphere-notification
+    environment:
+      SPRING_APPLICATION_NAME: notification-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVICE_PORT: 8008
+      SMTP_HOST: ${SMTP_HOST:-localhost}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    ports:
+      - "8008:8008"
+    depends_on:
+      eureka:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - shopsphere-network
+
+networks:
+  shopsphere-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  zookeeper_data:
+    driver: local

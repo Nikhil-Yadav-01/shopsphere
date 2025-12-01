@@ -1,0 +1,476 @@
+---
+# Eureka Service Discovery
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eureka
+  namespace: shopsphere
+  labels:
+    app: eureka
+    tier: infrastructure
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eureka
+  template:
+    metadata:
+      labels:
+        app: eureka
+        tier: infrastructure
+    spec:
+      containers:
+      - name: eureka
+        image: shopsphere/eureka:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8761
+          name: eureka
+        env:
+        - name: SPRING_APPLICATION_NAME
+          value: discovery
+        - name: SPRING_PROFILES_ACTIVE
+          value: prod
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /eureka/status
+            port: 8761
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /eureka/status
+            port: 8761
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka
+  namespace: shopsphere
+  labels:
+    app: eureka
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8761
+    targetPort: eureka
+    protocol: TCP
+    name: eureka
+  selector:
+    app: eureka
+
+---
+# API Gateway
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: shopsphere
+  labels:
+    app: api-gateway
+    tier: gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+        tier: gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: shopsphere/api-gateway:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SPRING_APPLICATION_NAME
+          value: api-gateway
+        - name: SPRING_PROFILES_ACTIVE
+          value: prod
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: http://eureka:8761/eureka/
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: shopsphere
+  labels:
+    app: api-gateway
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: api-gateway
+
+---
+# Auth Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: shopsphere
+  labels:
+    app: auth-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+        tier: service
+    spec:
+      containers:
+      - name: auth-service
+        image: shopsphere/auth-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8001
+          name: http
+        env:
+        - name: SPRING_APPLICATION_NAME
+          value: auth-service
+        - name: SPRING_PROFILES_ACTIVE
+          value: prod
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: http://eureka:8761/eureka/
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:postgresql://postgres:5432/shopsphere
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_USER
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: secret
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: shopsphere
+  labels:
+    app: auth-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8001
+    targetPort: 8001
+    protocol: TCP
+    name: http
+  selector:
+    app: auth-service
+
+---
+# Catalog Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-service
+  namespace: shopsphere
+  labels:
+    app: catalog-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: catalog-service
+  template:
+    metadata:
+      labels:
+        app: catalog-service
+        tier: service
+    spec:
+      containers:
+      - name: catalog-service
+        image: shopsphere/catalog-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8002
+          name: http
+        env:
+        - name: SPRING_APPLICATION_NAME
+          value: catalog-service
+        - name: SPRING_PROFILES_ACTIVE
+          value: prod
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: http://eureka:8761/eureka/
+        - name: SPRING_DATA_MONGODB_URI
+          value: mongodb://shopsphere:mongodb-change-in-prod@mongodb:27017/shopsphere?authSource=admin
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8002
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-service
+  namespace: shopsphere
+  labels:
+    app: catalog-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8002
+    targetPort: 8002
+    protocol: TCP
+    name: http
+  selector:
+    app: catalog-service
+
+---
+# Payment Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: shopsphere
+  labels:
+    app: payment-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+        tier: service
+    spec:
+      containers:
+      - name: payment-service
+        image: shopsphere/payment-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8006
+          name: http
+        env:
+        - name: SPRING_APPLICATION_NAME
+          value: payment-service
+        - name: SPRING_PROFILES_ACTIVE
+          value: prod
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: http://eureka:8761/eureka/
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:postgresql://postgres:5432/shopsphere
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: POSTGRES_USER
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: POSTGRES_PASSWORD
+        - name: STRIPE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: stripe-secret
+              key: api-key
+        - name: STRIPE_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: stripe-secret
+              key: webhook-secret
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8006
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8006
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: shopsphere
+  labels:
+    app: payment-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8006
+    targetPort: 8006
+    protocol: TCP
+    name: http
+  selector:
+    app: payment-service
+
+---
+# Checkout Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-service
+  namespace: shopsphere
+  labels:
+    app: checkout-service
+    tier: service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: checkout-service
+  template:
+    metadata:
+      labels:
+        app: checkout-service
+        tier: service
+    spec:
+      containers:
+      - name: checkout-service
+        image: shopsphere/checkout-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8007
+          name: http
+        env:
+        - name: SPRING_APPLICATION_NAME
+          value: checkout-service
+        - name: SPRING_PROFILES_ACTIVE
+          value: prod
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: http://eureka:8761/eureka/
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8007
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8007
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout-service
+  namespace: shopsphere
+  labels:
+    app: checkout-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8007
+    targetPort: 8007
+    protocol: TCP
+    name: http
+  selector:
+    app: checkout-service
