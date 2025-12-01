@@ -1,0 +1,1063 @@
+ShopSphere — COMPLETE DETAILED FILE & COMPONENT MAP
+Package base: com.rudraksha.shopsphere
+Generated: 2025-11-29
+
+=== OVERVIEW ===
+This file contains a most-detailed file-by-file map (per microservice) for a full-featured Amazon-like backend (ShopSphere)
+implemented with Java 17  + Spring Boot, microservices architecture, Docker/Kubernetes/Ansible-friendly.
+Each service has its own project; shared modules are in a multi-module build. For each file listed there is a short description.
+
+--- TOP-LEVEL REPO LAYOUT ---
+/shopsphere
+  /common-models
+  /common-utils
+  /common-security
+  /common-kafka
+  /common-db
+  /shared-test
+  /services
+    /api-gateway
+    /config-server
+    /discovery
+    /auth-service
+    /user-service
+    /catalog-service
+    /inventory-service
+    /pricing-service
+    /cart-service
+    /checkout-service
+    /order-service
+    /payment-service
+    /shipping-service
+    /notification-service
+    /review-service
+    /recommendation-service
+    /search-service
+    /media-service
+    /coupon-service
+    /returns-service
+    /fraud-service
+    /analytics-service
+    /batch-service
+    /admin-service
+    /websocket-chat
+  /infra
+    /docker
+    /k8s
+    /helm
+    /ansible
+    /terraform
+    /cicd
+  README.md
+  pom.xml (or settings for multi-module)
+
+--- SHARED MODULES (DETAILED FILES) ---
+(common-models)
+  src/main/java/com/rudraksha/shopsphere/shared/models/
+    ApiResponse.java                -- uniform API response wrapper
+    PagingResponse.java
+    SortOrder.java
+    BaseEntity.java                 -- id, createdAt, updatedAt, deleted flag
+    AuditFields.java
+    Enums/
+      OrderStatus.java
+      PaymentStatus.java
+      Currency.java
+      Role.java
+      EventType.java
+    dto/
+      UserDTO.java
+      ProductDTO.java
+      PriceDTO.java
+      OrderDTO.java
+      AddressDTO.java
+    events/
+      EventEnvelope.java             -- common envelope for kafka events
+      SchemaVersion.java
+
+(common-utils)
+  src/main/java/com/rudraksha/shopsphere/shared/utils/
+    ResponseUtil.java
+    ValidationUtil.java
+    DateTimeUtil.java
+    IdGenerator.java                -- UUID helper
+    JsonUtil.java
+    SafeMapper.java                 -- MapStruct configuration
+    FileStoreUtil.java
+    CsvUtil.java
+    RetryUtil.java
+    StreamUtil.java
+
+(common-security)
+  src/main/java/com/rudraksha/shopsphere/shared/security/
+    JwtTokenProvider.java
+    JwtAuthenticationFilter.java
+    SecurityConstants.java
+    RolesAndAuthorities.java
+    OAuth2ClientConfig.java
+    TokenRevocationStore.java       -- interface to a store (redis/db)
+    PasswordHasher.java             -- BCrypt wrapper
+    KeyRotationService.java
+
+(common-kafka)
+  src/main/java/com/rudraksha/shopsphere/shared/kafka/
+    KafkaConfig.java
+    EventPublisher.java
+    EventConsumer.java
+    TopicConstants.java
+    AvroSchemas/                    -- or JSON-Schema definitions
+      user-created.avsc
+      order-placed.avsc
+    serialization/
+      JsonSerde.java
+      AvroSerde.java
+
+(common-db)
+  src/main/java/com/rudraksha/shopsphere/shared/db/
+    BaseRepository.java
+    JpaSpecificationBuilder.java
+    PaginationUtils.java
+    FlywayConfig.java
+
+(shared-test)
+  src/test/java/com/rudraksha/shopsphere/shared/test/
+    IntegrationTestBase.java        -- Testcontainers setup
+    EmbeddedRedisConfig.java
+    EmbeddedKafkaConfig.java
+    MockDataFactory.java
+
+--- SERVICE TEMPLATE (APPLIED TO ALL MICROSERVICES) ---
+Each service follows this structure (example path: services/<service-name>/src/...)
+
+  /src/main/java/com/rudraksha/shopsphere/<service>/
+    <ServiceName>Application.java
+    config/
+      ServiceConfig.java
+      SwaggerConfig.java
+      OpenApiConfig.java
+      MetricsConfig.java
+      KafkaConfig.java
+      DbConfig.java
+    controller/
+      HealthController.java
+      AdminController.java
+      <Resource>Controller.java         -- CRUD endpoints
+    dto/
+      request/
+        <Resource>CreateRequest.java
+        <Resource>UpdateRequest.java
+      response/
+        <Resource>Response.java
+    entity/
+      <Resource>.java
+      BaseEntity.java                    -- if service-specific augmentations
+    repository/
+      <Resource>Repository.java
+    service/
+      <Resource>Service.java
+      impl/
+        <Resource>ServiceImpl.java
+    api/                                   -- feign clients / rest clients to other services
+      <OtherService>Client.java
+    events/
+      producer/
+        <EventName>Producer.java
+      consumer/
+        <EventName>Consumer.java
+    mapper/
+      <Resource>Mapper.java                -- MapStruct
+    validator/
+      <Resource>Validator.java
+    exception/
+      <ServiceSpecificException>.java
+    security/                              -- optional per service (if needed)
+      SecurityConfig.java
+    util/
+      <Service>Util.java
+    docs/
+      openapi.yaml                         -- service-specific api spec
+  /src/main/resources/
+    application.yml
+    bootstrap.yml
+    logback-spring.xml
+    db/migration/
+      V1__init.sql
+  Dockerfile
+  docker-compose.yml                      -- for local dev optionally
+  k8s/
+    deployment.yaml
+    service.yaml
+    hpa.yaml
+    ingress.yaml
+    configmap.yaml
+    secret.yaml
+  helm/
+    Chart.yaml
+    values.yaml
+    templates/
+  ansible/
+    roles/<service>/
+      tasks/
+        main.yml
+      templates/
+        systemd.j2
+  ci/
+    Jenkinsfile
+    .github/workflows/ci.yml
+  pom.xml
+
+--- DETAILED FILE MAP PER SERVICE ---
+Below each service with all important files (controllers, services, entities, DTOs, events, mappers, tests, infra files, docs)
+
+1) API GATEWAY (services/api-gateway/)
+  src/main/java/com/rudraksha/shopsphere/gateway/
+    GatewayApplication.java
+    config/
+      GatewayConfig.java                -- route definitions programmatic or properties-backed
+      RateLimiterConfig.java
+      CorsConfig.java
+      ExceptionHandlingConfig.java
+      Resilience4jConfig.java
+    filter/
+      AuthenticationFilter.java         -- JWT validation using shared-security
+      AuthorizationFilter.java
+      RateLimitingFilter.java           -- Redis-backed
+      LoggingFilter.java
+      MetricsFilter.java
+      RequestIdFilter.java
+    controller/
+      HealthController.java
+      RouteAdminController.java
+    util/
+      GatewayUtil.java
+  src/main/resources/application.yml
+  Dockerfile
+  k8s/*, helm/*, ansible/*, Jenkinsfile
+
+2) CONFIG SERVER (services/config-server/)
+  com...config/
+    ConfigServerApplication.java
+    config/
+      ConfigServerConfig.java
+      GitPropertiesConfig.java
+    resources/
+      application.yml
+      bootstrap.yml
+  Dockerfile, k8s, helm, ansible
+
+3) DISCOVERY SERVER (services/discovery/)
+  com...discovery/
+    DiscoveryApplication.java
+    config/
+      EurekaServerConfig.java
+    resources/application.yml
+  Dockerfile, k8s, helm, ansible
+
+4) AUTH SERVICE (services/auth-service/)
+  com...auth/
+    AuthServiceApplication.java
+    config/
+      SecurityConfig.java
+      OAuth2Config.java
+      MailConfig.java
+      JwtConfig.java
+    controller/
+      AuthController.java                 -- /auth/login /auth/register /auth/refresh
+      OauthController.java
+      MfaController.java
+      PasswordController.java             -- reset, forgot
+      AdminAuthController.java
+    dto/
+      request/
+        LoginRequest.java
+        RegisterRequest.java
+        RefreshTokenRequest.java
+        MfaVerifyRequest.java
+      response/
+        AuthResponse.java
+        TokenResponse.java
+    entity/
+      User.java
+      Role.java
+      Permission.java
+      RefreshToken.java
+      UserDevice.java
+      PasswordResetToken.java
+    repository/
+      UserRepository.java
+      RoleRepository.java
+      RefreshTokenRepository.java
+      PasswordResetTokenRepository.java
+    service/
+      AuthService.java
+      UserService.java
+      TokenService.java
+      MailService.java
+      impl/
+        AuthServiceImpl.java
+        UserServiceImpl.java
+        TokenServiceImpl.java
+    events/
+      producer/
+        UserCreatedProducer.java
+      consumer/
+        ExternalAuthConsumer.java
+    security/
+      JwtTokenProvider.java
+      JwtAuthenticationFilter.java
+      PasswordEncoderConfig.java
+      OAuth2SuccessHandler.java
+    validator/
+      RegisterValidator.java
+    exception/
+      UserAlreadyExistsException.java
+      InvalidCredentialsException.java
+      TokenValidationException.java
+    util/
+      OtpUtil.java
+      EmailTemplates.java
+    resources/
+      application.yml
+      db/migration/V1__create_users.sql
+    Dockerfile, k8s, helm, ansible, Jenkinsfile
+    tests/
+      AuthControllerUnitTest.java
+      AuthIntegrationTest.java
+
+5) USER SERVICE (services/user-service/)
+  com...user/
+    UserServiceApplication.java
+    config/
+      UserConfig.java
+      StorageConfig.java
+    controller/
+      UserController.java                -- CRUD user profile endpoints
+      AddressController.java
+    dto/
+      request/
+        UpdateProfileRequest.java
+        CreateAddressRequest.java
+      response/
+        UserProfileResponse.java
+        AddressResponse.java
+    entity/
+      UserProfile.java
+      Address.java
+      KycDocument.java
+      Preference.java
+    repository/
+      UserProfileRepository.java
+      AddressRepository.java
+    service/
+      UserProfileService.java
+      AddressService.java
+      impl/
+        UserProfileServiceImpl.java
+        AddressServiceImpl.java
+    events/
+      consumer/
+        UserCreatedConsumer.java         -- consume auth user.created
+      producer/
+        UserProfileUpdatedProducer.java
+    mapper/
+      UserProfileMapper.java
+    validator/
+      AddressValidator.java
+    resources/
+      application.yml
+      db/migration/V1__user_profile.sql
+    Dockerfile, k8s, helm, ansible
+    tests/ unit + integration
+
+6) CATALOG SERVICE (services/catalog-service/)
+  com...catalog/
+    CatalogApplication.java
+    config/
+      CatalogConfig.java
+      StorageConfig.java
+    controller/
+      ProductController.java            -- public product endpoints & admin endpoints
+      CategoryController.java
+      BrandController.java
+    dto/
+      request/
+        ProductCreateRequest.java
+        ProductUpdateRequest.java
+        VariantCreateRequest.java
+      response/
+        ProductResponse.java
+        CategoryResponse.java
+    entity/
+      Product.java
+      ProductVariant.java
+      Category.java
+      Brand.java
+      Seller.java
+      ProductAttribute.java
+      ProductImage.java
+    repository/
+      ProductRepository.java
+      CategoryRepository.java
+      VariantRepository.java
+    service/
+      ProductService.java
+      CategoryService.java
+      VariantService.java
+      ProductIndexerService.java       -- pushes to search-service (kafka or rest)
+      impl/
+        ProductServiceImpl.java
+    api/
+      MediaServiceClient.java
+      SearchServiceClient.java
+    events/
+      producer/
+        ProductCreatedProducer.java
+        ProductUpdatedProducer.java
+      consumer/
+        MediaProcessedConsumer.java
+    mapper/
+      ProductMapper.java
+    validator/
+      ProductValidator.java
+    resources/
+      application.yml
+      db/migration/V1__catalog.sql
+    Dockerfile, k8s, helm, ansible
+    tests/
+
+7) INVENTORY SERVICE (services/inventory-service/)
+  com...inventory/
+    InventoryApplication.java
+    config/InventoryConfig.java
+    controller/InventoryController.java
+    dto/
+      StockUpdateRequest.java
+      StockResponse.java
+    entity/
+      Warehouse.java
+      Stock.java
+      StockReservation.java
+      StockMovement.java
+    repository/
+      StockRepository.java
+      ReservationRepository.java
+    service/
+      InventoryService.java
+      StockAllocatorService.java       -- reservation & release
+      WarehouseService.java
+      impl/
+        InventoryServiceImpl.java
+    events/
+      consumer/
+        OrderPlacedConsumer.java       -- reserve stock when order placed
+      producer/
+        StockReservedProducer.java
+        StockReleasedProducer.java
+    util/
+      LockUtil.java                    -- distributed lock helpers (Redis/Redisson)
+    resources/
+      application.yml
+      db/migration/V1__inventory.sql
+    Dockerfile, k8s, helm, ansible
+    tests/
+
+8) PRICING SERVICE (services/pricing-service/)
+  com...pricing/
+    PricingApplication.java
+    controller/PricingController.java
+    dto/
+      PriceRequest.java
+      PriceResponse.java
+      PromotionCreateRequest.java
+    entity/
+      Price.java
+      PriceHistory.java
+      PromotionCampaign.java
+      PromotionRule.java
+    repository/
+      PriceRepository.java
+      PromotionRepository.java
+    service/
+      PricingService.java
+      PromotionEngine.java            -- rule eval
+      impl/
+        PricingServiceImpl.java
+    events/
+      consumer/
+        ProductUpdatedConsumer.java
+      producer/
+        PriceUpdatedProducer.java
+    resources/
+      application.yml
+      db/migration/V1__pricing.sql
+    Dockerfile, k8s, helm, ansible
+
+9) CART SERVICE (services/cart-service/)
+  com...cart/
+    CartApplication.java
+    controller/CartController.java
+    dto/
+      AddToCartRequest.java
+      CartResponse.java
+      MergeCartRequest.java
+    entity/
+      Cart.java
+      CartItem.java
+      CartSnapshot.java
+    repository/
+      CartRepository.java      -- backed by Redis or Postgres fallback
+    service/
+      CartService.java
+      GuestCartService.java
+      CartMergeService.java
+      impl/
+        CartServiceImpl.java
+    events/
+      consumer/
+        PriceUpdatedConsumer.java
+      producer/
+        CartUpdatedProducer.java
+    util/RedisCartSerializer.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+10) WISHLIST SERVICE (services/wishlist-service/)
+  com...wishlist/
+    WishlistApplication.java
+    controller/WishlistController.java
+    entity/
+      Wishlist.java
+      WishlistItem.java
+    repository/
+      WishlistRepository.java
+    service/
+      WishlistService.java
+    events/ producer/consumer (optional)
+    resources/application.yml
+    Dockerfile, k8s, helm, ansible
+
+11) CHECKOUT SERVICE (services/checkout-service/)
+  com...checkout/
+    CheckoutApplication.java
+    controller/CheckoutController.java
+    dto/
+      CheckoutRequest.java
+      CheckoutPreviewResponse.java
+    saga/
+      CheckoutSagaOrchestrator.java     -- orchestrate inventory, payment, coupon, order
+      steps/
+        ReserveStockStep.java
+        ChargePaymentStep.java
+        ConfirmOrderStep.java
+        Compensations/
+          ReleaseStockCompensation.java
+          RefundPaymentCompensation.java
+    service/
+      CheckoutService.java
+      impl/
+        CheckoutServiceImpl.java
+    events/
+      producer/
+        CheckoutStartedProducer.java
+      consumer/
+        PaymentConfirmedConsumer.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+12) ORDER SERVICE (services/order-service/)
+  com...order/
+    OrderApplication.java
+    controller/OrderController.java
+    dto/
+      OrderCreateRequest.java
+      OrderResponse.java
+      OrderStatusUpdateRequest.java
+    entity/
+      Order.java
+      OrderItem.java
+      OrderHistory.java
+      Fulfilment.java
+    repository/
+      OrderRepository.java
+      OrderHistoryRepository.java
+    service/
+      OrderService.java
+      OrderStateMachine.java           -- explicit state transitions
+      impl/
+        OrderServiceImpl.java
+    saga/
+      OrderSagaCoordinator.java
+    events/
+      consumer/
+        PaymentConfirmedConsumer.java
+        InventoryReservedConsumer.java
+      producer/
+        OrderPlacedProducer.java
+        OrderCancelledProducer.java
+    mapper/OrderMapper.java
+    resources/
+      application.yml
+      db/migration/V1__order.sql
+    Dockerfile, k8s, helm, ansible
+    tests/
+
+13) PAYMENT SERVICE (services/payment-service/)
+  com...payment/
+    PaymentApplication.java
+    controller/PaymentController.java
+    dto/
+      PaymentRequest.java
+      PaymentResponse.java
+      RefundRequest.java
+    entity/
+      PaymentTransaction.java
+      RefundTransaction.java
+    repository/
+      PaymentRepository.java
+      RefundRepository.java
+    service/
+      PaymentService.java
+      GatewayAdapter.java             -- adapter for stripe/razorpay/paypal
+      WebhookHandlerService.java
+      impl/
+        PaymentServiceImpl.java
+    webhook/
+      StripeWebhookController.java
+      RazorpayWebhookController.java
+    security/WebhookSignatureVerifier.java
+    events/
+      producer/
+        PaymentConfirmedProducer.java
+      consumer/
+        OrderPlacedConsumer.java
+    resources/
+      application.yml
+      db/migration/V1__payment.sql
+    Dockerfile, k8s, helm, ansible
+
+14) SHIPPING SERVICE (services/shipping-service/)
+  com...shipping/
+    ShippingApplication.java
+    controller/ShippingController.java
+    dto/
+      CreateShipmentRequest.java
+      ShipmentResponse.java
+    entity/
+      Shipment.java
+      Package.java
+      TrackingEvent.java
+    repository/
+      ShipmentRepository.java
+      TrackingRepository.java
+    service/
+      ShippingService.java
+      CarrierAdapter.java             -- abstract integration layer
+      LabelService.java
+      impl/
+        ShippingServiceImpl.java
+    events/
+      consumer/
+        OrderFulfilledConsumer.java
+      producer/
+        ShipmentCreatedProducer.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+15) NOTIFICATION SERVICE (services/notification-service/)
+  com...notification/
+    NotificationApplication.java
+    controller/NotificationController.java   -- admin / test endpoints
+    dto/
+      NotificationRequest.java
+      TemplatePreviewRequest.java
+    entity/
+      Notification.java
+      NotificationTemplate.java
+      NotificationLog.java
+    repository/
+      NotificationRepository.java
+      TemplateRepository.java
+    service/
+      EmailService.java
+      SmsService.java
+      PushService.java
+      TemplateService.java
+      impl/
+        EmailServiceImpl.java
+        SmsServiceImpl.java
+        PushServiceImpl.java
+        TemplateServiceImpl.java
+    templates/
+      order-confirmation.ftl
+      password-reset.ftl
+    events/
+      consumer/
+        OrderEventsConsumer.java
+    util/
+      TemplateRenderer.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+16) REVIEW SERVICE (services/review-service/)
+  com...review/
+    ReviewApplication.java
+    controller/ReviewController.java
+    dto/
+      ReviewCreateRequest.java
+    entity/
+      Review.java
+      ReviewReport.java
+    repository/
+      ReviewRepository.java
+      ReviewReportRepository.java
+    service/
+      ReviewService.java
+      ModerationService.java         -- moderation pipeline (auto + manual)
+    events/
+      consumer/
+        OrderDeliveredConsumer.java
+      producer/
+        ReviewCreatedProducer.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+17) RECOMMENDATION SERVICE (services/recommendation-service/)
+  com...recommendation/
+    RecommendationApplication.java
+    controller/RecommendationController.java
+    dto/
+      RecommendationRequest.java
+      RecommendationResponse.java
+    service/
+      RecommendationService.java
+      ModelLoaderService.java
+      FeatureStoreClient.java
+    ml/
+      CollaborativeFilteringEngine.java
+      SimilarProductsEngine.java
+    events/
+      consumer/
+        BehaviorEventConsumer.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+18) SEARCH SERVICE (services/search-service/)
+  com...search/
+    SearchApplication.java
+    controller/SearchController.java
+    dto/
+      SearchRequest.java
+      SearchResponse.java
+    service/
+      SearchService.java
+      IndexerService.java
+    config/
+      ElasticsearchConfig.java
+    events/
+      consumer/
+        ProductIndexConsumer.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+19) MEDIA SERVICE (services/media-service/)
+  com...media/
+    MediaApplication.java
+    controller/MediaController.java
+    dto/
+      UploadResponse.java
+    entity/
+      MediaMetadata.java
+    repository/
+      MediaMetadataRepository.java
+    service/
+      StorageService.java            -- S3 adapter
+      ImageProcessorService.java     -- thumbnails, webp, etc
+      SignedUrlService.java
+    api/
+      CDNClient.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+20) COUPON SERVICE (services/coupon-service/)
+  com...coupon/
+    CouponApplication.java
+    controller/CouponController.java
+    entity/
+      Coupon.java
+      CouponRedemption.java
+    repository/
+      CouponRepository.java
+    service/
+      CouponService.java
+      CouponValidationService.java
+    events/
+      consumer/
+        OrderPlacedConsumer.java
+      producer/
+        CouponRedeemedProducer.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+21) RETURNS SERVICE (services/returns-service/)
+  com...returns/
+    ReturnsApplication.java
+    controller/ReturnsController.java
+    entity/
+      ReturnRequest.java
+      RMA.java
+    repository/
+      ReturnRepository.java
+    service/
+      ReturnsService.java
+    events/
+      consumer/
+        OrderDeliveredConsumer.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+22) FRAUD SERVICE (services/fraud-service/)
+  com...fraud/
+    FraudApplication.java
+    controller/FraudController.java
+    dto/
+      FraudCheckRequest.java
+      FraudScoreResponse.java
+    entity/
+      FraudCase.java
+    service/
+      FraudScoringService.java
+      RulesEngineService.java
+    events/
+      consumer/
+        CheckoutEventsConsumer.java
+      producer/
+        FraudAlertProducer.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+23) ANALYTICS SERVICE (services/analytics-service/)
+  com...analytics/
+    AnalyticsApplication.java
+    controller/EventsController.java
+    dto/
+      AnalyticsEvent.java
+    service/
+      EventIngestService.java
+      ETLJobService.java
+    events/
+      producer/
+        RawEventProducer.java
+    storage/
+      DataLakeClient.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+24) BATCH SERVICE (services/batch-service/)
+  com...batch/
+    BatchApplication.java
+    jobs/
+      NightlyReportJob.java
+      StockSyncJob.java
+      PriceSyncJob.java
+    scheduler/
+      SchedulerConfig.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+25) ADMIN SERVICE (services/admin-service/)
+  com...admin/
+    AdminApplication.java
+    controller/AdminUserController.java
+    controller/AdminMetricsController.java
+    service/AdminUserService.java
+    security/AdminSecurityConfig.java
+    resources/
+      application.yml
+    Dockerfile, k8s, helm, ansible
+
+26) WEBSOCKET_CHAT (services/websocket-chat/)
+  com...chat/
+    ChatApplication.java
+    config/WebSocketConfig.java
+    controller/ChatWebSocketController.java
+    entity/ChatMessage.java
+    repository/ChatMessageRepository.java
+    service/ChatService.java
+    util/SessionManager.java
+    resources/application.yml
+    Dockerfile, k8s, helm, ansible
+
+--- INFRA / DEVOPS ARTIFACTS (DETAILED) ---
+/infra/docker/
+  docker-compose.yml         -- local stack with postgres, redis, kafka, zookeeper, minio, es
+/infra/k8s/base/
+  namespace.yaml
+  ingress-nginx.yaml
+/infra/k8s/shopsphere/
+  shopsphere-namespace.yaml
+  secrets.yaml
+  configmaps/
+    shared-configmap.yaml
+/infra/helm/shopsphere-chart/
+  Chart.yaml
+  values.yaml
+  templates/
+    deployment.yaml
+    service.yaml
+    hpa.yaml
+/infra/ansible/playbooks/
+  deploy-all.yml
+  rollback.yml
+/infra/terraform/
+  providers.tf
+  eks-cluster.tf
+  rds.tf
+  msks.tf
+/infra/cicd/
+  jenkins/
+    Jenkinsfile-global
+  github-actions/
+    ci.yml
+/infra/monitoring/
+  prometheus/
+    prometheus.yml
+  grafana/
+    dashboards/
+      api-gateway.json
+      orders.json
+
+--- CI/CD & BUILD ARTIFACTS (per service) ---
+Each service includes:
+  Jenkinsfile
+  .github/workflows/ci.yml
+  sonar-project.properties
+  Dockerfile (multi-stage)
+  build.gradle or pom.xml
+
+--- SCHEMAS & CONTRACTS ---
+/schemas/
+  kafka/
+    user-created.json
+    order-placed.json
+    product-created.json
+  openapi/
+    gateway-openapi.yml
+    auth-openapi.yml
+  avro/
+    order.avsc
+    product.avsc
+
+--- NOTES ON DATABASE MIGRATIONS ---
+Each service has:
+  src/main/resources/db/migration/V1__create_tables.sql (and subsequent versions)
+Use Flyway or Liquibase. Keep migrations in repo and executed at startup.
+
+--- TESTING STRATEGY FILES ---
+Each service includes tests:
+  src/test/java/.../unit/    -- JUnit tests
+  src/test/java/.../integration/ -- Testcontainers
+  contract-tests/            -- Pact files for consumer driven contract testing
+  performance/
+    k6/                      -- scripts for load testing
+
+--- SECURITY AND SECRETS ---
+Never store secrets in repo; include placeholders:
+  infra/secrets/sample-secrets.yaml
+Integration with Vault/AWS Secrets Manager documented in infra/README.md
+
+--- EXAMPLE: ORDER SERVICE DETAILED FILES (EXPANDED) ---
+services/order-service/
+  src/main/java/com/rudraksha/shopsphere/order/
+    OrderApplication.java
+    config/
+      OrderConfig.java
+      KafkaConfig.java
+      DbConfig.java
+    controller/
+      OrderController.java
+      AdminOrderController.java
+      WebhookController.java
+    dto/
+      request/
+        CreateOrderRequest.java
+        CancelOrderRequest.java
+      response/
+        OrderResponse.java
+        OrderStatusResponse.java
+    entity/
+      Order.java
+      OrderItem.java
+      OrderHistory.java
+      OrderPayment.java
+      OrderAddress.java
+    repository/
+      OrderRepository.java
+      OrderItemRepository.java
+      OrderHistoryRepository.java
+    service/
+      OrderService.java
+      OrderQueryService.java
+      impl/
+        OrderServiceImpl.java
+    saga/
+      OrderSagaCoordinator.java
+      steps/
+        ReserveStockStep.java
+        ConfirmPaymentStep.java
+        CreateShipmentStep.java
+      compensations/
+        CancelPaymentCompensation.java
+        ReleaseStockCompensation.java
+    events/
+      consumer/
+        PaymentConfirmedConsumer.java
+        InventoryReservedConsumer.java
+      producer/
+        OrderPlacedProducer.java
+        OrderCancelledProducer.java
+    mapper/
+      OrderMapper.java
+    exception/
+      OrderNotFoundException.java
+      OrderStateException.java
+    util/
+      OrderNumberGenerator.java
+      OrderValidationUtil.java
+    resources/
+      application.yml
+      db/migration/V1__order.sql
+  Dockerfile
+  k8s/deployment.yaml
+  helm/Chart.yaml
+  ansible/roles/order-service/tasks/main.yml
+  ci/Jenkinsfile
+  pom.xml
+
+--- HOW TO USE THIS FILE ---
+1. Clone project skeleton.
+2. Create shared modules first (common-*). Publish to internal artifact repo (nexus/artifactory).
+3. Implement core identity (auth-service) + user-service + api-gateway.
+4. Iterate by phase (see phased plan previously provided).
+5. Use infra/docker/docker-compose.yml for local integration during development.
+6. CI pipelines should build shared modules first, then services that depend on them.
+
+--- FINAL REMARKS ---
+This Option A map is comprehensive but adaptable. If you want, I can:
+ - Generate a multi-module Maven pom.xml skeleton (with modules wired).
+ - Produce starter code templates for 3 services (auth, catalog, order) with working Dockerfiles & k8s manifests.
+ - Convert this text into other formats (markdown, CSV, or a set of shell commands to scaffold projects).
+
+End of generated file.
