@@ -11,6 +11,10 @@ import java.util.UUID;
 @Component
 public class StripePaymentGateway implements PaymentGateway {
 
+    private static final String PAYMENT_ID_PREFIX = "pi_";
+    private static final String REFUND_ID_PREFIX = "re_";
+    private static final int STRIPE_ID_LENGTH = 24;
+
     @Value("${stripe.api-key:}")
     private String apiKey;
 
@@ -22,7 +26,7 @@ public class StripePaymentGateway implements PaymentGateway {
         log.info("Processing payment via Stripe: method={}, amount={}, currency={}", 
                 paymentMethod, amount, currency);
 
-        String transactionId = "pi_" + UUID.randomUUID().toString().replace("-", "").substring(0, 24);
+        String transactionId = generatePaymentId();
         String gatewayResponse = String.format(
                 "{\"id\":\"%s\",\"status\":\"succeeded\",\"amount\":%s,\"currency\":\"%s\"}",
                 transactionId, amount.multiply(BigDecimal.valueOf(100)).intValue(), currency.toLowerCase()
@@ -36,7 +40,7 @@ public class StripePaymentGateway implements PaymentGateway {
     public RefundResult processRefund(String transactionId, BigDecimal amount) {
         log.info("Processing refund via Stripe: transactionId={}, amount={}", transactionId, amount);
 
-        String refundId = "re_" + UUID.randomUUID().toString().replace("-", "").substring(0, 24);
+        String refundId = generateRefundId();
         String gatewayResponse = String.format(
                 "{\"id\":\"%s\",\"status\":\"succeeded\",\"amount\":%s,\"payment_intent\":\"%s\"}",
                 refundId, amount.multiply(BigDecimal.valueOf(100)).intValue(), transactionId
@@ -44,6 +48,14 @@ public class StripePaymentGateway implements PaymentGateway {
 
         log.info("Refund processed successfully: refundId={}", refundId);
         return new RefundResult(true, refundId, gatewayResponse);
+    }
+
+    private String generatePaymentId() {
+        return PAYMENT_ID_PREFIX + UUID.randomUUID().toString().replace("-", "").substring(0, STRIPE_ID_LENGTH);
+    }
+
+    private String generateRefundId() {
+        return REFUND_ID_PREFIX + UUID.randomUUID().toString().replace("-", "").substring(0, STRIPE_ID_LENGTH);
     }
 
     public String getWebhookSecret() {
