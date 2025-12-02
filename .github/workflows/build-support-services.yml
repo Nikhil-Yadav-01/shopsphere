@@ -1,0 +1,112 @@
+name: Build Support Services
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'services/notification-service/**'
+      - 'services/shipping-service/**'
+      - 'services/review-service/**'
+      - 'services/recommendation-service/**'
+      - 'services/search-service/**'
+      - 'services/media-service/**'
+      - 'services/coupon-service/**'
+      - 'services/returns-service/**'
+      - 'services/fraud-service/**'
+      - 'services/analytics-service/**'
+      - 'services/batch-service/**'
+      - 'services/admin-service/**'
+      - 'services/websocket-chat/**'
+      - 'common-*/**'
+      - 'pom.xml'
+      - '.github/workflows/build-support-services.yml'
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - 'services/notification-service/**'
+      - 'services/shipping-service/**'
+      - 'services/review-service/**'
+      - 'services/recommendation-service/**'
+      - 'services/search-service/**'
+      - 'services/media-service/**'
+      - 'services/coupon-service/**'
+      - 'services/returns-service/**'
+      - 'services/fraud-service/**'
+      - 'services/analytics-service/**'
+      - 'services/batch-service/**'
+      - 'services/admin-service/**'
+      - 'services/websocket-chat/**'
+      - 'common-*/**'
+      - 'pom.xml'
+
+jobs:
+  build-support-services:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build common modules (prerequisite)
+        run: mvn -B clean install -pl common-models,common-utils,common-security,common-kafka,common-db -am -DskipTests
+
+      - name: Build Notification Service
+        run: mvn -B install -pl services/notification-service -am -DskipTests
+
+      - name: Build Shipping Service
+        run: mvn -B install -pl services/shipping-service -am -DskipTests
+
+      - name: Build Review Service
+        run: mvn -B install -pl services/review-service -am -DskipTests
+
+      - name: Build Recommendation Service
+        run: mvn -B install -pl services/recommendation-service -am -DskipTests
+
+      - name: Build Search Service
+        run: mvn -B install -pl services/search-service -am -DskipTests
+
+      - name: Build Media Service
+        run: mvn -B install -pl services/media-service -am -DskipTests
+
+      - name: Build Coupon Service
+        run: mvn -B install -pl services/coupon-service -am -DskipTests
+
+      - name: Build Returns Service
+        run: mvn -B install -pl services/returns-service -am -DskipTests
+
+      - name: Build Fraud Service
+        run: mvn -B install -pl services/fraud-service -am -DskipTests
+
+      - name: Build Analytics Service
+        run: mvn -B install -pl services/analytics-service -am -DskipTests
+
+      - name: Build Batch Service
+        run: mvn -B install -pl services/batch-service -am -DskipTests
+
+      - name: Build Admin Service
+        run: mvn -B install -pl services/admin-service -am -DskipTests
+
+      - name: Build WebSocket Chat Service
+        run: mvn -B install -pl services/websocket-chat -am -DskipTests
+
+      - name: Upload support services artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: support-services-build
+          path: 'services/*/target/*.jar'
+          retention-days: 7

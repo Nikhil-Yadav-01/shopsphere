@@ -1,0 +1,67 @@
+name: Build Commerce Services
+
+on:
+  push:
+    branches: [main, master, develop]
+    paths:
+      - 'services/cart-service/**'
+      - 'services/checkout-service/**'
+      - 'services/payment-service/**'
+      - 'services/order-service/**'
+      - 'common-*/**'
+      - 'pom.xml'
+      - '.github/workflows/build-commerce-services.yml'
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      - 'services/cart-service/**'
+      - 'services/checkout-service/**'
+      - 'services/payment-service/**'
+      - 'services/order-service/**'
+      - 'common-*/**'
+      - 'pom.xml'
+
+jobs:
+  build-commerce-services:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build common modules (prerequisite)
+        run: mvn -B clean install -pl common-models,common-utils,common-security,common-kafka,common-db -am -DskipTests
+
+      - name: Build Cart Service
+        run: mvn -B install -pl services/cart-service -am -DskipTests
+
+      - name: Build Checkout Service
+        run: mvn -B install -pl services/checkout-service -am -DskipTests
+
+      - name: Build Payment Service
+        run: mvn -B install -pl services/payment-service -am -DskipTests
+
+      - name: Build Order Service
+        run: mvn -B install -pl services/order-service -am -DskipTests
+
+      - name: Upload commerce services artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: commerce-services-build
+          path: 'services/*/target/*.jar'
+          retention-days: 7
