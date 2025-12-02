@@ -4,18 +4,17 @@ import com.rudraksha.shopsphere.notification.service.TemplateService;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.StringWriter;
 import java.util.Map;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class TemplateServiceImpl implements TemplateService {
 
-    private static final Logger log = LoggerFactory.getLogger(TemplateServiceImpl.class);
     private final Configuration freeMarkerConfig;
 
     @Override
