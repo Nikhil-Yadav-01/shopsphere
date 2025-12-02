@@ -1,14 +1,12 @@
 package com.rudraksha.shopsphere.payment.controller;
 
 import com.rudraksha.shopsphere.payment.service.PaymentService;
-import com.rudraksha.shopsphere.payment.config.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.anyString;
@@ -18,14 +16,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Integration tests for WebhookController.
- * Uses full Spring Boot context to test webhook endpoint with security configuration.
- * Webhook endpoint is configured to allow anonymous access in SecurityConfig.
- * Uses Apache Kafka for payment event publishing.
+ * Unit tests for WebhookController.
+ * Tests webhook endpoint that handles Stripe payment events.
+ * Webhook endpoint is configured to allow anonymous access.
+ * Uses Apache Kafka for payment event publishing via PaymentService.
  */
-@SpringBootTest
-@AutoConfigureMockMvc
-@Import(SecurityConfig.class)
+@WebMvcTest(WebhookController.class)
 class WebhookControllerTest {
 
     @Autowired
