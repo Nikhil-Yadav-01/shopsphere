@@ -190,6 +190,7 @@ jobs:
           name: owasp-security-report
           path: '**/target/dependency-check-report.html'
           retention-days: 14
+          if-no-files-found: ignore
 
   final-status:
     needs: [ build-infrastructure, build-core, build-data, build-commerce, build-support, security-scan ]

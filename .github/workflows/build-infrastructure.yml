@@ -43,7 +43,7 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Build common modules (prerequisite)
-        run: mvn -B clean install -pl common-models,common-utils,common-security,common-kafka,common-db -am -DskipTests
+        run: mvn -B clean install -pl common-models,common-utils,common-security,common-kafka,common-db,shared-test -am -DskipTests
 
       - name: Build Discovery Server
         run: mvn -B install -pl services/discovery -am -DskipTests
@@ -58,5 +58,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: infrastructure-services-build
-          path: 'services/*/target/*.jar'
+          path: |
+            services/discovery/target/*.jar
+            services/config-server/target/*.jar
+            services/api-gateway/target/*.jar
           retention-days: 7
+          if-no-files-found: ignore
