@@ -1,22 +1,27 @@
 package com.rudraksha.shopsphere.review.entity;
 
-import com.rudraksha.shopsphere.shared.db.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reviews", indexes = {
     @Index(name = "idx_product_id", columnList = "product_id"),
     @Index(name = "idx_user_id", columnList = "user_id")
 })
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Review extends BaseEntity {
+public class Review {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "product_id", nullable = false)
     private Long productId;
@@ -45,6 +50,14 @@ public class Review extends BaseEntity {
 
     @Column(name = "verified_purchase", nullable = false)
     private Boolean verifiedPurchase = true;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     public enum ModerationStatus {
         PENDING,
