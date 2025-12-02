@@ -6,52 +6,52 @@ import com.rudraksha.shopsphere.shipping.dto.response.TrackingEventResponse;
 import com.rudraksha.shopsphere.shipping.entity.Shipment;
 import com.rudraksha.shopsphere.shipping.entity.ShippingAddress;
 import com.rudraksha.shopsphere.shipping.entity.TrackingEvent;
-import org.mapstruct.Mapper;
-import org.mapstruct.Named;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring")
-public interface ShippingMapper {
+@Service
+public class ShippingMapper {
 
-    ShipmentResponse toShipmentResponse(Shipment shipment);
+    private final ModelMapper modelMapper;
 
-    List<ShipmentResponse> toShipmentResponseList(List<Shipment> shipments);
+    public ShippingMapper(ModelMapper modelMapper) {
+        this.modelMapper = modelMapper;
+    }
 
-    TrackingEventResponse toTrackingEventResponse(TrackingEvent trackingEvent);
+    public ShipmentResponse toShipmentResponse(Shipment shipment) {
+        return modelMapper.map(shipment, ShipmentResponse.class);
+    }
 
-    List<TrackingEventResponse> toTrackingEventResponseList(List<TrackingEvent> trackingEvents);
+    public List<ShipmentResponse> toShipmentResponseList(List<Shipment> shipments) {
+        return shipments.stream()
+                .map(this::toShipmentResponse)
+                .collect(Collectors.toList());
+    }
 
-    @Named("toAddressResponse")
-    default ShipmentResponse.AddressResponse toAddressResponse(ShippingAddress address) {
+    public TrackingEventResponse toTrackingEventResponse(TrackingEvent trackingEvent) {
+        return modelMapper.map(trackingEvent, TrackingEventResponse.class);
+    }
+
+    public List<TrackingEventResponse> toTrackingEventResponseList(List<TrackingEvent> trackingEvents) {
+        return trackingEvents.stream()
+                .map(this::toTrackingEventResponse)
+                .collect(Collectors.toList());
+    }
+
+    public ShipmentResponse.AddressResponse toAddressResponse(ShippingAddress address) {
         if (address == null) {
             return null;
         }
-        return ShipmentResponse.AddressResponse.builder()
-                .fullName(address.getFullName())
-                .phone(address.getPhone())
-                .addressLine1(address.getAddressLine1())
-                .addressLine2(address.getAddressLine2())
-                .city(address.getCity())
-                .state(address.getState())
-                .postalCode(address.getPostalCode())
-                .country(address.getCountry())
-                .build();
+        return modelMapper.map(address, ShipmentResponse.AddressResponse.class);
     }
 
-    default ShippingAddress toShippingAddress(CreateShipmentRequest.ShippingAddressRequest addressRequest) {
+    public ShippingAddress toShippingAddress(CreateShipmentRequest.ShippingAddressRequest addressRequest) {
         if (addressRequest == null) {
             return null;
         }
-        return ShippingAddress.builder()
-                .fullName(addressRequest.getFullName())
-                .phone(addressRequest.getPhone())
-                .addressLine1(addressRequest.getAddressLine1())
-                .addressLine2(addressRequest.getAddressLine2())
-                .city(addressRequest.getCity())
-                .state(addressRequest.getState())
-                .postalCode(addressRequest.getPostalCode())
-                .country(addressRequest.getCountry())
-                .build();
+        return modelMapper.map(addressRequest, ShippingAddress.class);
     }
 }
