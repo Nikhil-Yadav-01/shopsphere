@@ -74,7 +74,7 @@ public class OrderServiceImpl implements OrderService {
         Order savedOrder = orderRepository.save(order);
         log.info("Order created successfully with ID: {}", savedOrder.getId());
 
-        return orderMapper.toResponse(savedOrder);
+        return orderMapper.toOrderResponse(savedOrder);
     }
 
     @Override
@@ -85,7 +85,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + orderId));
 
-        return orderMapper.toResponse(order);
+        return orderMapper.toOrderResponse(order);
     }
 
     @Override
@@ -122,7 +122,7 @@ public class OrderServiceImpl implements OrderService {
         Order cancelledOrder = orderRepository.save(order);
 
         log.info("Order cancelled successfully with ID: {}", orderId);
-        return orderMapper.toResponse(cancelledOrder);
+        return orderMapper.toOrderResponse(cancelledOrder);
     }
 
     @Override
@@ -137,7 +137,7 @@ public class OrderServiceImpl implements OrderService {
             order.setStatus(newStatus);
             Order updatedOrder = orderRepository.save(order);
             log.info("Order status updated successfully");
-            return orderMapper.toResponse(updatedOrder);
+            return orderMapper.toOrderResponse(updatedOrder);
         } catch (IllegalArgumentException e) {
             throw new InvalidOrderStateException("Invalid order status: " + status);
         }
