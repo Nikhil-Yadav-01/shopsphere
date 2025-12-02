@@ -2,12 +2,14 @@ package com.rudraksha.shopsphere.notification.service.impl;
 
 import com.rudraksha.shopsphere.notification.dto.EmailRequest;
 import com.rudraksha.shopsphere.notification.service.EmailService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
-@Slf4j
 public class EmailServiceImpl implements EmailService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmailServiceImpl.class);
 
     @Override
     public void sendEmail(EmailRequest request) {
