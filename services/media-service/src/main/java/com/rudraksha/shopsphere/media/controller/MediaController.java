@@ -43,7 +43,7 @@ public class MediaController {
 
         MediaResponse response = mediaService.uploadMedia(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "Media uploaded successfully"));
+                .body(ApiResponse.success("Media uploaded successfully", response));
     }
 
     @GetMapping("/{mediaId}")
@@ -80,18 +80,18 @@ public class MediaController {
 
         log.info("Update media request - mediaId: {}", mediaId);
         MediaResponse response = mediaService.updateMedia(mediaId, request);
-        return ResponseEntity.ok(ApiResponse.success(response, "Media updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Media updated successfully", response));
     }
 
     @DeleteMapping("/{mediaId}")
-    public ResponseEntity<ApiResponse<Void>> deleteMedia(@PathVariable Long mediaId) {
+    public ResponseEntity<ApiResponse<String>> deleteMedia(@PathVariable Long mediaId) {
         log.info("Delete media request - mediaId: {}", mediaId);
         mediaService.deleteMedia(mediaId);
         return ResponseEntity.ok(ApiResponse.success("Media deleted successfully"));
     }
 
     @DeleteMapping("/entity/{entityType}/{entityId}")
-    public ResponseEntity<ApiResponse<Void>> deleteMediaByEntity(
+    public ResponseEntity<ApiResponse<String>> deleteMediaByEntity(
             @PathVariable String entityType,
             @PathVariable Long entityId) {
 
