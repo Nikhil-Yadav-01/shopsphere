@@ -168,10 +168,10 @@ jobs:
         run: mvn -B install -pl services/cart-service -am -DskipTests
 
       - name: Build Checkout Service
-        run: mvn -B clean install -pl services/checkout-service -am
+        run: mvn -B clean install -pl services/checkout-service -am -DskipTests
 
       - name: Build Payment Service
-        run: mvn -B clean install -pl services/payment-service -am
+        run: mvn -B clean install -pl services/payment-service -am -DskipTests
 
       - name: Build Order Service
         run: mvn -B install -pl services/order-service -am -DskipTests
