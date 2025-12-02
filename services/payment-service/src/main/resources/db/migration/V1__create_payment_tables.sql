@@ -1,7 +1,7 @@
 -- Payment tables for ShopSphere Payment Service
 
 CREATE TABLE IF NOT EXISTS payments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     order_id UUID NOT NULL,
     user_id UUID NOT NULL,
     amount NUMERIC(19, 4) NOT NULL,
@@ -15,12 +15,13 @@ CREATE TABLE IF NOT EXISTS payments (
 );
 
 CREATE TABLE IF NOT EXISTS refunds (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    payment_id UUID NOT NULL REFERENCES payments(id),
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    payment_id UUID NOT NULL,
     amount NUMERIC(19, 4) NOT NULL,
     reason TEXT,
     status VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_refunds_payment_id FOREIGN KEY (payment_id) REFERENCES payments(id)
 );
 
 -- Indexes for better query performance
