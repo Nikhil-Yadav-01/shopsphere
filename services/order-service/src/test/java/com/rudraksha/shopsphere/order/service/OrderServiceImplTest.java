@@ -50,7 +50,7 @@ class OrderServiceImplTest {
 
     private CreateOrderRequest createValidOrderRequest() {
         UUID userId = UUID.randomUUID();
-        OrderAddress address = OrderAddress.builder()
+        CreateOrderRequest.AddressRequest address = CreateOrderRequest.AddressRequest.builder()
                 .fullName("John Doe")
                 .phone("555-1234")
                 .addressLine1("123 Main St")
@@ -94,7 +94,7 @@ class OrderServiceImplTest {
                 .build();
 
         when(orderRepository.save(any(Order.class))).thenReturn(mockOrder);
-        when(orderMapper.toResponse(mockOrder)).thenReturn(expectedResponse);
+        when(orderMapper.toOrderResponse(mockOrder)).thenReturn(expectedResponse);
 
         // Act
         OrderResponse result = orderService.createOrder(request);
@@ -133,7 +133,7 @@ class OrderServiceImplTest {
                 .build();
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(mockOrder));
-        when(orderMapper.toResponse(mockOrder)).thenReturn(expectedResponse);
+        when(orderMapper.toOrderResponse(mockOrder)).thenReturn(expectedResponse);
 
         // Act
         OrderResponse result = orderService.getOrderById(orderId);
@@ -174,7 +174,7 @@ class OrderServiceImplTest {
                 .build();
 
         when(orderRepository.findByUserId(userId, pageable)).thenReturn(ordersPage);
-        when(orderMapper.toResponse(order)).thenReturn(response);
+        when(orderMapper.toOrderResponse(order)).thenReturn(response);
 
         // Act
         Page<OrderResponse> result = orderService.getUserOrders(userId, pageable);
@@ -206,8 +206,8 @@ class OrderServiceImplTest {
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
-        when(orderMapper.toResponse(any(Order.class))).thenReturn(expectedResponse);
-
+        when(orderMapper.toOrderResponse(any(Order.class))).thenReturn(expectedResponse);
+        
         // Act
         OrderResponse result = orderService.cancelOrder(orderId, request);
 
@@ -255,8 +255,8 @@ class OrderServiceImplTest {
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
-        when(orderMapper.toResponse(any(Order.class))).thenReturn(expectedResponse);
-
+        when(orderMapper.toOrderResponse(any(Order.class))).thenReturn(expectedResponse);
+        
         // Act
         OrderResponse result = orderService.updateOrderStatus(orderId, "CONFIRMED");
 

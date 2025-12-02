@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.*;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
@@ -126,7 +127,8 @@ class CartServiceEnhancedTest {
                 .quantity(1)
                 .build();
 
-        var product = new MockProduct(productId, "Test Product", BigDecimal.valueOf(100), "image.jpg");
+        var product = new CatalogClient.ProductResponse(productId, "Test Product", "description", 
+                BigDecimal.valueOf(100), "image.jpg", "category", Map.of());
 
         when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));
         when(catalogClient.getProduct(productId)).thenReturn(product);
@@ -142,8 +144,9 @@ class CartServiceEnhancedTest {
                 .quantity(10)
                 .build();
 
-        var product = new MockProduct(productId, "Test Product", BigDecimal.valueOf(100), "image.jpg");
-        var stock = new MockStockInfo(false);
+        var product = new CatalogClient.ProductResponse(productId, "Test Product", "description",
+                BigDecimal.valueOf(100), "image.jpg", "category", Map.of());
+        var stock = new InventoryClient.StockResponse(productId, 5, false, "warehouse1");
 
         when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));
         when(catalogClient.getProduct(productId)).thenReturn(product);
@@ -159,8 +162,9 @@ class CartServiceEnhancedTest {
                 .quantity(2)
                 .build();
 
-        var product = new MockProduct(productId, "Test Product", BigDecimal.valueOf(100), "image.jpg");
-        var stock = new MockStockInfo(true);
+        var product = new CatalogClient.ProductResponse(productId, "Test Product", "description",
+                BigDecimal.valueOf(100), "image.jpg", "category", Map.of());
+        var stock = new InventoryClient.StockResponse(productId, 10, true, "warehouse1");
 
         when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));
         when(catalogClient.getProduct(productId)).thenReturn(product);
@@ -224,35 +228,5 @@ class CartServiceEnhancedTest {
     @Test
     void testRemoveFromCart_BlankProductId() {
         assertThrows(IllegalArgumentException.class, () -> cartService.removeFromCart(userId, ""));
-    }
-
-    // Mock classes for testing
-    static class MockProduct {
-        private String id;
-        private String name;
-        private BigDecimal price;
-        private String imageUrl;
-
-        public MockProduct(String id, String name, BigDecimal price, String imageUrl) {
-            this.id = id;
-            this.name = name;
-            this.price = price;
-            this.imageUrl = imageUrl;
-        }
-
-        public String id() { return id; }
-        public String name() { return name; }
-        public BigDecimal price() { return price; }
-        public String imageUrl() { return imageUrl; }
-    }
-
-    static class MockStockInfo {
-        private boolean inStock;
-
-        public MockStockInfo(boolean inStock) {
-            this.inStock = inStock;
-        }
-
-        public boolean inStock() { return inStock; }
     }
 }

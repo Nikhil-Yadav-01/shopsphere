@@ -54,8 +54,8 @@ public class OrderServiceImpl implements OrderService {
                 .status(OrderStatus.PENDING)
                 .totalAmount(totalAmount)
                 .currency(request.getCurrency() != null ? request.getCurrency() : "USD")
-                .shippingAddress(request.getShippingAddress())
-                .billingAddress(request.getBillingAddress())
+                .shippingAddress(orderMapper.toOrderAddress(request.getShippingAddress()))
+                .billingAddress(orderMapper.toOrderAddress(request.getBillingAddress()))
                 .build();
 
         // Add order items
@@ -94,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
         log.debug("Fetching orders for user: {}", userId);
 
         return orderRepository.findByUserId(userId, pageable)
-                .map(orderMapper::toResponse);
+                .map(orderMapper::toOrderResponse);
     }
 
     @Override
@@ -103,7 +103,7 @@ public class OrderServiceImpl implements OrderService {
         log.debug("Fetching all orders");
 
         return orderRepository.findAll(pageable)
-                .map(orderMapper::toResponse);
+                .map(orderMapper::toOrderResponse);
     }
 
     @Override
