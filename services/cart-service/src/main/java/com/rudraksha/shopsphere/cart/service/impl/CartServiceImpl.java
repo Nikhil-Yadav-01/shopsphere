@@ -37,25 +37,46 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartResponse addToCart(String userId, AddToCartRequest request) {
+        // Validate request
+        if (request == null || request.getProductId() == null || request.getProductId().isBlank()) {
+            throw new IllegalArgumentException("Product ID is required");
+        }
+        if (request.getQuantity() == null || request.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+
+        // Fetch product from catalog service
         var product = catalogClient.getProduct(request.getProductId());
         if (product == null) {
             throw new IllegalArgumentException("Product not found with id: " + request.getProductId());
         }
         
+        // Check inventory availability
         var stock = inventoryClient.checkStock(request.getProductId(), request.getQuantity());
-        if (stock == null || !stock.inStock()) {
+        if (stock == null) {
+            throw new IllegalStateException("Unable to check stock for product: " + request.getProductId());
+        }
+        if (!stock.inStock()) {
             throw new IllegalStateException("Product is out of stock or insufficient quantity available");
         }
 
         Cart cart = getOrCreateCart(userId);
 
         Optional<CartItem> existingItem = cart.getItems().stream()
-            .filter(item -> item.getProductId().equals(request.getProductId()))
+            .filter(item -> item.getProductId() != null && item.getProductId().equals(request.getProductId()))
             .findFirst();
 
         if (existingItem.isPresent()) {
             CartItem item = existingItem.get();
-            item.setQuantity(item.getQuantity() + request.getQuantity());
+            int newQuantity = item.getQuantity() + request.getQuantity();
+            
+            // Validate new quantity doesn't exceed stock
+            var updatedStock = inventoryClient.checkStock(request.getProductId(), newQuantity);
+            if (updatedStock == null || !updatedStock.inStock()) {
+                throw new IllegalStateException("Cannot add more. Insufficient stock available for quantity: " + newQuantity);
+            }
+            
+            item.setQuantity(newQuantity);
         } else {
             CartItem newItem = CartItem.builder()
                 .productId(product.id())
@@ -70,37 +91,56 @@ public class CartServiceImpl implements CartService {
         cart.setUpdatedAt(LocalDateTime.now());
         cartRepository.save(cart);
 
-        log.info("Added product {} to cart for user {}", request.getProductId(), userId);
+        log.info("Added product {} (qty: {}) to cart for user {}", request.getProductId(), request.getQuantity(), userId);
         return mapToResponse(cart);
     }
 
     @Override
     public CartResponse updateCartItem(String userId, String productId, UpdateCartItemRequest request) {
+        // Validate inputs
+        if (productId == null || productId.isBlank()) {
+            throw new IllegalArgumentException("Product ID is required");
+        }
+        if (request == null || request.getQuantity() == null || request.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+
         Cart cart = getOrCreateCart(userId);
 
         CartItem item = cart.getItems().stream()
-            .filter(i -> i.getProductId().equals(productId))
+            .filter(i -> i.getProductId() != null && i.getProductId().equals(productId))
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Product not found in cart"));
 
+        // Check stock availability for new quantity
         var stock = inventoryClient.checkStock(productId, request.getQuantity());
+        if (stock == null) {
+            throw new IllegalStateException("Unable to check stock for product: " + productId);
+        }
         if (!stock.inStock()) {
-            throw new IllegalStateException("Insufficient stock available");
+            throw new IllegalStateException("Insufficient stock available for quantity: " + request.getQuantity());
         }
 
         item.setQuantity(request.getQuantity());
         cart.setUpdatedAt(LocalDateTime.now());
         cartRepository.save(cart);
 
-        log.info("Updated cart item {} for user {}", productId, userId);
+        log.info("Updated cart item {} (qty: {}) for user {}", productId, request.getQuantity(), userId);
         return mapToResponse(cart);
     }
 
     @Override
     public CartResponse removeFromCart(String userId, String productId) {
+        // Validate input
+        if (productId == null || productId.isBlank()) {
+            throw new IllegalArgumentException("Product ID is required");
+        }
+
         Cart cart = getOrCreateCart(userId);
 
-        boolean removed = cart.getItems().removeIf(item -> item.getProductId().equals(productId));
+        boolean removed = cart.getItems().removeIf(item -> 
+            item.getProductId() != null && item.getProductId().equals(productId)
+        );
         if (!removed) {
             throw new IllegalArgumentException("Product not found in cart");
         }
@@ -136,16 +176,28 @@ public class CartServiceImpl implements CartService {
     }
 
     private CartResponse mapToResponse(Cart cart) {
+        // Validate cart
+        if (cart == null) {
+            throw new IllegalArgumentException("Cart cannot be null");
+        }
+        
+        // Handle null items list
+        if (cart.getItems() == null) {
+            cart.setItems(new ArrayList<>());
+        }
+
         var itemResponses = cart.getItems().stream()
+            .filter(item -> item != null) // Filter null items
             .map(this::mapItemToResponse)
             .toList();
 
         BigDecimal totalPrice = itemResponses.stream()
+            .filter(response -> response.getSubtotal() != null)
             .map(CartItemResponse::getSubtotal)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         int totalItems = itemResponses.stream()
-            .mapToInt(CartItemResponse::getQuantity)
+            .mapToInt(response -> response.getQuantity() != null ? response.getQuantity() : 0)
             .sum();
 
         return CartResponse.builder()
@@ -160,6 +212,19 @@ public class CartServiceImpl implements CartService {
     }
 
     private CartItemResponse mapItemToResponse(CartItem item) {
+        // Validate item
+        if (item == null) {
+            throw new IllegalArgumentException("Cart item cannot be null");
+        }
+        
+        // Validate item fields
+        if (item.getPrice() == null) {
+            throw new IllegalArgumentException("Item price cannot be null");
+        }
+        if (item.getQuantity() == null || item.getQuantity() <= 0) {
+            throw new IllegalArgumentException("Item quantity must be greater than 0");
+        }
+
         BigDecimal subtotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
         return CartItemResponse.builder()
             .productId(item.getProductId())
