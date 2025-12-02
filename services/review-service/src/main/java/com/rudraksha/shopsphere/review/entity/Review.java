@@ -4,13 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reviews", indexes = {
-    @Index(name = "idx_product_id", columnList = "product_id"),
-    @Index(name = "idx_user_id", columnList = "user_id")
+        @Index(name = "idx_product_id", columnList = "product_id"),
+        @Index(name = "idx_user_id", columnList = "user_id")
 })
 @Getter
 @Setter
@@ -30,7 +29,7 @@ public class Review {
     private Long userId;
 
     @Column(name = "rating", nullable = false)
-    private Integer rating; // 1-5
+    private Integer rating;
 
     @Column(name = "title", length = 100, nullable = false)
     private String title;
@@ -50,6 +49,9 @@ public class Review {
 
     @Column(name = "verified_purchase", nullable = false)
     private Boolean verifiedPurchase = true;
+
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

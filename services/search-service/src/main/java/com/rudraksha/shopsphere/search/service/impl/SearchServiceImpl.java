@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -78,7 +79,7 @@ public class SearchServiceImpl implements SearchService {
 
     private List<SearchResultItem> mockSearchResults(SearchRequest request) {
         // Mock data for demonstration
-        return List.of(
+        return Stream.of(
                 SearchResultItem.builder()
                         .productId(1L)
                         .productName("Premium " + request.getQuery())
@@ -99,7 +100,7 @@ public class SearchServiceImpl implements SearchService {
                         .reviewCount(87)
                         .stock(100)
                         .build()
-        ).stream()
+        )
                 .filter(item -> request.getMinPrice() == null || 
                        item.getPrice().compareTo(request.getMinPrice()) >= 0)
                 .filter(item -> request.getMaxPrice() == null || 

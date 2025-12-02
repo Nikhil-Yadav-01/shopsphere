@@ -31,7 +31,7 @@ public class ChatController {
         log.info("Get or create conversation request - users: {}, {}", user1Id, user2Id);
         Conversation conversation = chatService.getOrCreateConversation(user1Id, user2Id);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success(conversation, "Conversation created or retrieved successfully"));
+            .body(ApiResponse.success("Conversation created or retrieved successfully", conversation));
     }
 
     @PostMapping("/messages")
@@ -42,7 +42,7 @@ public class ChatController {
         log.info("Send message request - conversation: {}, sender: {}", conversationId, senderId);
         ChatMessageResponse response = chatService.sendMessage(conversationId, senderId, request.getContent());
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success(response, "Message sent successfully"));
+            .body(ApiResponse.success("Message sent successfully", response));
     }
 
     @GetMapping("/conversations/{conversationId}/messages")
@@ -63,14 +63,14 @@ public class ChatController {
     }
 
     @PutMapping("/messages/{messageId}/read")
-    public ResponseEntity<ApiResponse<Void>> markAsRead(@PathVariable Long messageId) {
+    public ResponseEntity<ApiResponse<String>> markAsRead(@PathVariable Long messageId) {
         log.info("Mark message as read request - message: {}", messageId);
         chatService.markAsRead(messageId);
         return ResponseEntity.ok(ApiResponse.success("Message marked as read"));
     }
 
     @PutMapping("/conversations/{conversationId}/read")
-    public ResponseEntity<ApiResponse<Void>> markConversationAsRead(
+    public ResponseEntity<ApiResponse<String>> markConversationAsRead(
             @PathVariable Long conversationId) {
         log.info("Mark conversation as read request - conversation: {}", conversationId);
         chatService.markConversationAsRead(conversationId);
@@ -94,7 +94,7 @@ public class ChatController {
     }
 
     @DeleteMapping("/conversations/{conversationId}")
-    public ResponseEntity<ApiResponse<Void>> deleteConversation(
+    public ResponseEntity<ApiResponse<String>> deleteConversation(
             @PathVariable Long conversationId) {
         log.info("Delete conversation request - conversation: {}", conversationId);
         chatService.deleteConversation(conversationId);
