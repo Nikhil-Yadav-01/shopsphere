@@ -29,7 +29,7 @@ public class S3Service {
     @Value("${aws.s3.region}")
     private String region;
 
-    public String uploadFile(String key, MultipartFile file) throws IOException {
+    public String uploadFile(String key, MultipartFile file) {
         log.info("Uploading file to S3: {}", key);
 
         try {

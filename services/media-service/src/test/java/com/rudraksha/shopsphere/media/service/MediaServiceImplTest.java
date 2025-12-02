@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,7 +40,7 @@ class MediaServiceImplTest {
     }
 
     @Test
-    void testUploadMedia_Success() {
+    void testUploadMedia_Success() throws IOException {
         // Arrange
         byte[] content = "test image content".getBytes();
         MultipartFile file = new MockMultipartFile("file", "test.jpg", "image/jpeg", content);
