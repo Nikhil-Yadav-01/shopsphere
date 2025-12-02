@@ -11,6 +11,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,6 +40,7 @@ class WebhookControllerTest {
         // Arrange
         String payload = "{\"type\":\"payment_intent.succeeded\",\"data\":{\"object\":{\"id\":\"pi_test123\"}}}";
         String signature = "t=1234567890,v1=valid_signature";
+        doNothing().when(paymentService).handleWebhookEvent(anyString(), anyString());
 
         // Act & Assert
         mockMvc.perform(post("/webhooks/stripe")
@@ -52,6 +56,7 @@ class WebhookControllerTest {
     void handleStripeWebhook_MissingSignature() throws Exception {
         // Arrange
         String payload = "{\"type\":\"payment_intent.succeeded\",\"data\":{\"object\":{\"id\":\"pi_test123\"}}}";
+        doNothing().when(paymentService).handleWebhookEvent(anyString(), eq(null));
 
         // Act & Assert - Webhook accepts requests but validates signature in service layer
         mockMvc.perform(post("/webhooks/stripe")
@@ -67,6 +72,7 @@ class WebhookControllerTest {
         // Arrange
         String payload = "";
         String signature = "t=1234567890,v1=valid_signature";
+        doNothing().when(paymentService).handleWebhookEvent(anyString(), anyString());
 
         // Act & Assert
         mockMvc.perform(post("/webhooks/stripe")
