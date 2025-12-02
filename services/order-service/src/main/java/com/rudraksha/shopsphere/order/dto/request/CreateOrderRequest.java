@@ -50,8 +50,8 @@ public class CreateOrderRequest {
         @NotNull(message = "Quantity is required")
         private Integer quantity;
 
-        @NotNull(message = "Unit price is required")
-        private java.math.BigDecimal unitPrice;
+        @NotNull(message = "Price is required")
+        private java.math.BigDecimal price;
     }
 
     @Data

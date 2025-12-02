@@ -20,6 +20,10 @@ public interface OrderMapper {
     @Mapping(target = "items", source = "items")
     OrderResponse toOrderResponse(Order order);
 
+    default OrderResponse toResponse(Order order) {
+        return toOrderResponse(order);
+    }
+
     List<OrderResponse> toOrderResponseList(List<Order> orders);
 
     OrderItemResponse toOrderItemResponse(OrderItem orderItem);
@@ -68,7 +72,7 @@ public interface OrderMapper {
                 .productName(itemRequest.getProductName())
                 .sku(itemRequest.getSku())
                 .quantity(itemRequest.getQuantity())
-                .unitPrice(itemRequest.getUnitPrice())
+                .unitPrice(itemRequest.getPrice())
                 .build();
     }
 }
