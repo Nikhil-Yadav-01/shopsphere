@@ -2,13 +2,23 @@ package com.rudraksha.shopsphere.review.mapper;
 
 import com.rudraksha.shopsphere.review.dto.ReviewResponse;
 import com.rudraksha.shopsphere.review.entity.Review;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
-public interface ReviewMapper {
-    
-    ReviewResponse reviewToReviewResponse(Review review);
-    
-    Review reviewResponseToReview(ReviewResponse reviewResponse);
+@Service
+public class ReviewMapper {
+
+    private final ModelMapper modelMapper;
+
+    public ReviewMapper(ModelMapper modelMapper) {
+        this.modelMapper = modelMapper;
+    }
+
+    public ReviewResponse reviewToReviewResponse(Review review) {
+        return modelMapper.map(review, ReviewResponse.class);
+    }
+
+    public Review reviewResponseToReview(ReviewResponse reviewResponse) {
+        return modelMapper.map(reviewResponse, Review.class);
+    }
 }
