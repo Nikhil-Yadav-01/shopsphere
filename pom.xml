@@ -37,6 +37,7 @@
         <module>common-security</module>
         <module>common-kafka</module>
         <module>common-db</module>
+        <module>shared-test</module>
         <module>services/discovery</module>
         <module>services/config-server</module>
         <module>services/api-gateway</module>
@@ -50,6 +51,18 @@
         <module>services/pricing-service</module>
         <module>services/checkout-service</module>
         <module>services/notification-service</module>
+        <module>services/shipping-service</module>
+        <module>services/review-service</module>
+        <module>services/recommendation-service</module>
+        <module>services/search-service</module>
+        <module>services/media-service</module>
+        <module>services/coupon-service</module>
+        <module>services/returns-service</module>
+        <module>services/fraud-service</module>
+        <module>services/analytics-service</module>
+        <module>services/batch-service</module>
+        <module>services/admin-service</module>
+        <module>services/websocket-chat</module>
     </modules>
 
     <dependencyManagement>
