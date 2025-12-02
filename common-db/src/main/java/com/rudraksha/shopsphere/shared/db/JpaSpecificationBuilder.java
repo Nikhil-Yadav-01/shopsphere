@@ -1,8 +1,6 @@
 package com.rudraksha.shopsphere.shared.db;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
@@ -22,8 +20,8 @@ public class JpaSpecificationBuilder<T> {
 
     public JpaSpecificationBuilder<T> addLike(String field, String value) {
         if (value != null && !value.isBlank()) {
-            specifications.add((root, query, cb) -> 
-                cb.like(cb.lower(root.get(field)), "%" + value.toLowerCase() + "%"));
+            specifications.add((root, query, cb) ->
+                    cb.like(cb.lower(root.get(field)), "%" + value.toLowerCase() + "%"));
         }
         return this;
     }
@@ -66,7 +64,7 @@ public class JpaSpecificationBuilder<T> {
         if (specifications.isEmpty()) {
             return Specification.where(null);
         }
-        
+
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             for (Specification<T> spec : specifications) {

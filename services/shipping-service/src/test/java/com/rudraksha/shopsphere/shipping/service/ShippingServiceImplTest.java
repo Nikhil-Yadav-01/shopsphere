@@ -1,10 +1,10 @@
 package com.rudraksha.shopsphere.shipping.service;
 
+import com.rudraksha.shopsphere.shared.models.enums.ShipmentStatus;
 import com.rudraksha.shopsphere.shipping.dto.request.CreateShipmentRequest;
 import com.rudraksha.shopsphere.shipping.dto.request.UpdateTrackingRequest;
 import com.rudraksha.shopsphere.shipping.dto.response.ShipmentResponse;
 import com.rudraksha.shopsphere.shipping.entity.Shipment;
-import com.rudraksha.shopsphere.shipping.entity.ShippingAddress;
 import com.rudraksha.shopsphere.shipping.entity.TrackingEvent;
 import com.rudraksha.shopsphere.shipping.exception.InvalidShipmentStateException;
 import com.rudraksha.shopsphere.shipping.exception.ShipmentNotFoundException;
@@ -12,7 +12,6 @@ import com.rudraksha.shopsphere.shipping.mapper.ShippingMapper;
 import com.rudraksha.shopsphere.shipping.repository.ShipmentRepository;
 import com.rudraksha.shopsphere.shipping.repository.TrackingEventRepository;
 import com.rudraksha.shopsphere.shipping.service.impl.ShippingServiceImpl;
-import com.rudraksha.shopsphere.shared.models.enums.ShipmentStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,16 +53,16 @@ class ShippingServiceImplTest {
     }
 
     private CreateShipmentRequest createValidShipmentRequest() {
-        CreateShipmentRequest.ShippingAddressRequest address = 
-            CreateShipmentRequest.ShippingAddressRequest.builder()
-                .fullName("John Doe")
-                .phone("555-1234")
-                .addressLine1("123 Main St")
-                .city("New York")
-                .state("NY")
-                .postalCode("10001")
-                .country("USA")
-                .build();
+        CreateShipmentRequest.ShippingAddressRequest address =
+                CreateShipmentRequest.ShippingAddressRequest.builder()
+                        .fullName("John Doe")
+                        .phone("555-1234")
+                        .addressLine1("123 Main St")
+                        .city("New York")
+                        .state("NY")
+                        .postalCode("10001")
+                        .country("USA")
+                        .build();
 
         return CreateShipmentRequest.builder()
                 .orderId(UUID.randomUUID())

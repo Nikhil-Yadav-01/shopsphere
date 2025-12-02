@@ -2,7 +2,7 @@ name: Build Core Services
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
     paths:
       - 'services/auth-service/**'
       - 'services/user-service/**'
@@ -10,7 +10,7 @@ on:
       - 'pom.xml'
       - '.github/workflows/build-core-services.yml'
   pull_request:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
     paths:
       - 'services/auth-service/**'
       - 'services/user-service/**'

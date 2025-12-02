@@ -6,14 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "coupon_redemptions", indexes = {
-    @Index(name = "idx_coupon_id", columnList = "coupon_id"),
-    @Index(name = "idx_user_id", columnList = "user_id"),
-    @Index(name = "idx_order_id", columnList = "order_id")
+        @Index(name = "idx_coupon_id", columnList = "coupon_id"),
+        @Index(name = "idx_user_id", columnList = "user_id"),
+        @Index(name = "idx_order_id", columnList = "order_id")
 })
 @Data
 @NoArgsConstructor

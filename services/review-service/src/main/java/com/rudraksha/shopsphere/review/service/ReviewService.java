@@ -2,7 +2,6 @@ package com.rudraksha.shopsphere.review.service;
 
 import com.rudraksha.shopsphere.review.dto.ReviewCreateRequest;
 import com.rudraksha.shopsphere.review.dto.ReviewResponse;
-import com.rudraksha.shopsphere.review.entity.Review;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

@@ -2,6 +2,7 @@ package com.rudraksha.shopsphere.checkout.dto.response;
 
 import lombok.Builder;
 import lombok.Data;
+
 import java.math.BigDecimal;
 
 @Data

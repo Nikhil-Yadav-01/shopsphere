@@ -12,9 +12,10 @@ public interface InventoryClient {
     StockResponse checkStock(@PathVariable String productId, @RequestParam Integer quantity);
 
     record StockResponse(
-        String productId,
-        Integer availableQuantity,
-        Boolean inStock,
-        String warehouseId
-    ) {}
+            String productId,
+            Integer availableQuantity,
+            Boolean inStock,
+            String warehouseId
+    ) {
+    }
 }

@@ -5,6 +5,7 @@ import com.rudraksha.shopsphere.shipping.dto.request.UpdateTrackingRequest;
 import com.rudraksha.shopsphere.shipping.dto.response.ShipmentResponse;
 import com.rudraksha.shopsphere.shipping.dto.response.TrackingEventResponse;
 import com.rudraksha.shopsphere.shipping.service.ShippingService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -14,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 

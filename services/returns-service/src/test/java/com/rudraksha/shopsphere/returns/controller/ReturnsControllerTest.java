@@ -80,8 +80,8 @@ class ReturnsControllerTest {
                 .thenReturn(returnResponse);
 
         mockMvc.perform(post("/api/returns")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(returnId.toString()))
                 .andExpect(jsonPath("$.rmaNumber").value("RMA-12345678"))
@@ -97,8 +97,8 @@ class ReturnsControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/returns")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -108,7 +108,7 @@ class ReturnsControllerTest {
         when(returnsService.getReturnById(returnId)).thenReturn(returnResponse);
 
         mockMvc.perform(get("/api/returns/" + returnId)
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(returnId.toString()))
                 .andExpect(jsonPath("$.rmaNumber").value("RMA-12345678"));
@@ -120,7 +120,7 @@ class ReturnsControllerTest {
         when(returnsService.getReturnByRmaNumber("RMA-12345678")).thenReturn(returnResponse);
 
         mockMvc.perform(get("/api/returns/rma/RMA-12345678")
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rmaNumber").value("RMA-12345678"));
     }
@@ -146,8 +146,8 @@ class ReturnsControllerTest {
                 .thenReturn(approvedResponse);
 
         mockMvc.perform(put("/api/returns/" + returnId + "/approve")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("APPROVED"));
     }
@@ -172,8 +172,8 @@ class ReturnsControllerTest {
                 .thenReturn(rejectedResponse);
 
         mockMvc.perform(put("/api/returns/" + returnId + "/reject")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("REJECTED"));
     }
@@ -195,8 +195,8 @@ class ReturnsControllerTest {
                 .thenReturn(refundedResponse);
 
         mockMvc.perform(put("/api/returns/" + returnId + "/process-refund")
-                .param("transactionId", "TXN-123456")
-                .contentType(MediaType.APPLICATION_JSON))
+                        .param("transactionId", "TXN-123456")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("REFUNDED"));
     }

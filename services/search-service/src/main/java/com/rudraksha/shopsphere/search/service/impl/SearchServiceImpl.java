@@ -7,6 +7,7 @@ import com.rudraksha.shopsphere.search.service.SearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,11 +21,11 @@ public class SearchServiceImpl implements SearchService {
     @Override
     public SearchResponse search(SearchRequest request) {
         long startTime = System.currentTimeMillis();
-        
+
         // In production, integrate with Elasticsearch client
         // This is a mock implementation
         List<SearchResultItem> results = mockSearchResults(request);
-        
+
         long executionTime = System.currentTimeMillis() - startTime;
 
         return SearchResponse.builder()
@@ -80,31 +81,31 @@ public class SearchServiceImpl implements SearchService {
     private List<SearchResultItem> mockSearchResults(SearchRequest request) {
         // Mock data for demonstration
         return Stream.of(
-                SearchResultItem.builder()
-                        .productId(1L)
-                        .productName("Premium " + request.getQuery())
-                        .description("High-quality product")
-                        .category(request.getCategory())
-                        .price(request.getMaxPrice() != null ? request.getMaxPrice() : java.math.BigDecimal.valueOf(99.99))
-                        .rating(4.5)
-                        .reviewCount(128)
-                        .stock(50)
-                        .build(),
-                SearchResultItem.builder()
-                        .productId(2L)
-                        .productName("Budget " + request.getQuery())
-                        .description("Affordable product")
-                        .category(request.getCategory())
-                        .price(java.math.BigDecimal.valueOf(29.99))
-                        .rating(4.0)
-                        .reviewCount(87)
-                        .stock(100)
-                        .build()
-        )
-                .filter(item -> request.getMinPrice() == null || 
-                       item.getPrice().compareTo(request.getMinPrice()) >= 0)
-                .filter(item -> request.getMaxPrice() == null || 
-                       item.getPrice().compareTo(request.getMaxPrice()) <= 0)
+                        SearchResultItem.builder()
+                                .productId(1L)
+                                .productName("Premium " + request.getQuery())
+                                .description("High-quality product")
+                                .category(request.getCategory())
+                                .price(request.getMaxPrice() != null ? request.getMaxPrice() : java.math.BigDecimal.valueOf(99.99))
+                                .rating(4.5)
+                                .reviewCount(128)
+                                .stock(50)
+                                .build(),
+                        SearchResultItem.builder()
+                                .productId(2L)
+                                .productName("Budget " + request.getQuery())
+                                .description("Affordable product")
+                                .category(request.getCategory())
+                                .price(java.math.BigDecimal.valueOf(29.99))
+                                .rating(4.0)
+                                .reviewCount(87)
+                                .stock(100)
+                                .build()
+                )
+                .filter(item -> request.getMinPrice() == null ||
+                        item.getPrice().compareTo(request.getMinPrice()) >= 0)
+                .filter(item -> request.getMaxPrice() == null ||
+                        item.getPrice().compareTo(request.getMaxPrice()) <= 0)
                 .collect(Collectors.toList());
     }
 }

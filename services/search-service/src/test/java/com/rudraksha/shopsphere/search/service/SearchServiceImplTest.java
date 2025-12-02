@@ -5,6 +5,7 @@ import com.rudraksha.shopsphere.search.dto.SearchResponse;
 import com.rudraksha.shopsphere.search.service.impl.SearchServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,8 +49,8 @@ class SearchServiceImplTest {
 
         assertNotNull(response);
         response.getResults().forEach(item ->
-            assertTrue(item.getPrice().compareTo(new BigDecimal("500")) >= 0 &&
-                      item.getPrice().compareTo(new BigDecimal("1500")) <= 0)
+                assertTrue(item.getPrice().compareTo(new BigDecimal("500")) >= 0 &&
+                        item.getPrice().compareTo(new BigDecimal("1500")) <= 0)
         );
     }
 
@@ -66,7 +67,7 @@ class SearchServiceImplTest {
 
         assertNotNull(response);
         response.getResults().forEach(item ->
-            assertEquals("Electronics", item.getCategory())
+                assertEquals("Electronics", item.getCategory())
         );
     }
 

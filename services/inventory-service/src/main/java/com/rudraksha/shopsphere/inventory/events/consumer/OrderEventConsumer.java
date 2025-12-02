@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rudraksha.shopsphere.inventory.dto.request.ReserveStockRequest;
 import com.rudraksha.shopsphere.inventory.service.InventoryService;
 import com.rudraksha.shopsphere.shared.kafka.TopicConstants;
-import com.rudraksha.shopsphere.shared.models.enums.EventType;
 import com.rudraksha.shopsphere.shared.models.events.EventEnvelope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

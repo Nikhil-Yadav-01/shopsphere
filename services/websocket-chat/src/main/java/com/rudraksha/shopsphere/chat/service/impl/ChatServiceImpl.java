@@ -28,15 +28,15 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public Conversation getOrCreateConversation(Long user1Id, Long user2Id) {
         log.info("Getting or creating conversation between users: {} and {}", user1Id, user2Id);
-        
+
         return conversationRepository.findConversationBetweenUsers(user1Id, user2Id)
-            .orElseGet(() -> {
-                Conversation conversation = Conversation.builder()
-                    .user1Id(user1Id)
-                    .user2Id(user2Id)
-                    .build();
-                return conversationRepository.save(conversation);
-            });
+                .orElseGet(() -> {
+                    Conversation conversation = Conversation.builder()
+                            .user1Id(user1Id)
+                            .user2Id(user2Id)
+                            .build();
+                    return conversationRepository.save(conversation);
+                });
     }
 
     @Override
@@ -46,11 +46,11 @@ public class ChatServiceImpl implements ChatService {
         Conversation conversation = getConversation(conversationId);
 
         ChatMessage message = ChatMessage.builder()
-            .conversationId(conversationId)
-            .senderId(senderId)
-            .content(content)
-            .isRead(false)
-            .build();
+                .conversationId(conversationId)
+                .senderId(senderId)
+                .content(content)
+                .isRead(false)
+                .build();
 
         ChatMessage savedMessage = chatMessageRepository.save(message);
         log.info("Message sent successfully with ID: {}", savedMessage.getId());
@@ -63,7 +63,7 @@ public class ChatServiceImpl implements ChatService {
     public Page<ChatMessageResponse> getConversationMessages(Long conversationId, Pageable pageable) {
         log.info("Fetching messages for conversation: {}", conversationId);
         return chatMessageRepository.findByConversationId(conversationId, pageable)
-            .map(this::mapToResponse);
+                .map(this::mapToResponse);
     }
 
     @Override
@@ -71,19 +71,19 @@ public class ChatServiceImpl implements ChatService {
     public List<ChatMessageResponse> getUnreadMessages(Long conversationId) {
         log.info("Fetching unread messages for conversation: {}", conversationId);
         return chatMessageRepository.findUnreadMessages(conversationId)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     public void markAsRead(Long messageId) {
         log.info("Marking message as read: {}", messageId);
         chatMessageRepository.findById(messageId)
-            .ifPresent(message -> {
-                message.setIsRead(true);
-                chatMessageRepository.save(message);
-            });
+                .ifPresent(message -> {
+                    message.setIsRead(true);
+                    chatMessageRepository.save(message);
+                });
     }
 
     @Override
@@ -108,7 +108,7 @@ public class ChatServiceImpl implements ChatService {
     public Conversation getConversation(Long conversationId) {
         log.info("Fetching conversation: {}", conversationId);
         return conversationRepository.findById(conversationId)
-            .orElseThrow(() -> new RuntimeException("Conversation not found with ID: " + conversationId));
+                .orElseThrow(() -> new RuntimeException("Conversation not found with ID: " + conversationId));
     }
 
     @Override
@@ -119,12 +119,12 @@ public class ChatServiceImpl implements ChatService {
 
     private ChatMessageResponse mapToResponse(ChatMessage message) {
         return ChatMessageResponse.builder()
-            .id(message.getId())
-            .conversationId(message.getConversationId())
-            .senderId(message.getSenderId())
-            .content(message.getContent())
-            .isRead(message.getIsRead())
-            .createdAt(message.getCreatedAt())
-            .build();
+                .id(message.getId())
+                .conversationId(message.getConversationId())
+                .senderId(message.getSenderId())
+                .content(message.getContent())
+                .isRead(message.getIsRead())
+                .createdAt(message.getCreatedAt())
+                .build();
     }
 }

@@ -1,6 +1,5 @@
 package com.rudraksha.shopsphere.returns.events.consumer;
 
-import com.rudraksha.shopsphere.shared.kafka.EventConsumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;

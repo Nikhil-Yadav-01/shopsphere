@@ -196,9 +196,9 @@ kubectl exec -n shopsphere deployment/mongodb -- \
 
 - PostgreSQL and MongoDB use `local` storage driver for demo
 - For production, use cloud-specific storage classes:
-  - AWS: `ebs-sc` (EBS)
-  - Azure: `managed-premium`
-  - GCP: `pd-ssd`
+    - AWS: `ebs-sc` (EBS)
+    - Azure: `managed-premium`
+    - GCP: `pd-ssd`
 
 Update the PersistentVolumeClaim `storageClassName` field:
 

@@ -43,30 +43,30 @@ class MediaServiceImplTest {
         // Arrange
         byte[] content = "test image content".getBytes();
         MultipartFile file = new MockMultipartFile("file", "test.jpg", "image/jpeg", content);
-        
+
         UploadMediaRequest request = UploadMediaRequest.builder()
-            .file(file)
-            .entityType("PRODUCT")
-            .entityId(1L)
-            .altText("Test Image")
-            .isPrimary(true)
-            .build();
+                .file(file)
+                .entityType("PRODUCT")
+                .entityId(1L)
+                .altText("Test Image")
+                .isPrimary(true)
+                .build();
 
         when(s3Service.uploadFile(anyString(), eq(file)))
-            .thenReturn("https://s3.amazonaws.com/media/test.jpg");
+                .thenReturn("https://s3.amazonaws.com/media/test.jpg");
 
         Media savedMedia = Media.builder()
-            .id(1L)
-            .url("https://s3.amazonaws.com/media/test.jpg")
-            .fileName("test.jpg")
-            .fileType("jpg")
-            .fileSize(file.getSize())
-            .mediaType(Media.MediaType.IMAGE)
-            .entityType("PRODUCT")
-            .entityId(1L)
-            .altText("Test Image")
-            .isPrimary(true)
-            .build();
+                .id(1L)
+                .url("https://s3.amazonaws.com/media/test.jpg")
+                .fileName("test.jpg")
+                .fileType("jpg")
+                .fileSize(file.getSize())
+                .mediaType(Media.MediaType.IMAGE)
+                .entityType("PRODUCT")
+                .entityId(1L)
+                .altText("Test Image")
+                .isPrimary(true)
+                .build();
 
         when(mediaRepository.findByEntityTypeAndEntityId("PRODUCT", 1L)).thenReturn(List.of());
         when(mediaRepository.save(any(Media.class))).thenReturn(savedMedia);
@@ -85,10 +85,10 @@ class MediaServiceImplTest {
     void testGetMedia_Success() {
         // Arrange
         Media media = Media.builder()
-            .id(1L)
-            .url("https://s3.amazonaws.com/media/test.jpg")
-            .fileName("test.jpg")
-            .build();
+                .id(1L)
+                .url("https://s3.amazonaws.com/media/test.jpg")
+                .fileName("test.jpg")
+                .build();
 
         when(mediaRepository.findById(1L)).thenReturn(Optional.of(media));
 
@@ -114,17 +114,17 @@ class MediaServiceImplTest {
     void testUpdateMedia_Success() {
         // Arrange
         Media existingMedia = Media.builder()
-            .id(1L)
-            .altText("Old Text")
-            .isPrimary(false)
-            .entityType("PRODUCT")
-            .entityId(1L)
-            .build();
+                .id(1L)
+                .altText("Old Text")
+                .isPrimary(false)
+                .entityType("PRODUCT")
+                .entityId(1L)
+                .build();
 
         UpdateMediaRequest request = UpdateMediaRequest.builder()
-            .altText("New Text")
-            .isPrimary(true)
-            .build();
+                .altText("New Text")
+                .isPrimary(true)
+                .build();
 
         when(mediaRepository.findById(1L)).thenReturn(Optional.of(existingMedia));
         when(mediaRepository.findByEntityTypeAndEntityId("PRODUCT", 1L)).thenReturn(List.of(existingMedia));
@@ -144,9 +144,9 @@ class MediaServiceImplTest {
     void testDeleteMedia_Success() {
         // Arrange
         Media media = Media.builder()
-            .id(1L)
-            .url("https://s3.amazonaws.com/media/test.jpg")
-            .build();
+                .id(1L)
+                .url("https://s3.amazonaws.com/media/test.jpg")
+                .build();
 
         when(mediaRepository.findById(1L)).thenReturn(Optional.of(media));
 
@@ -162,13 +162,13 @@ class MediaServiceImplTest {
     void testGetMediaByEntity_Success() {
         // Arrange
         Media media = Media.builder()
-            .id(1L)
-            .entityType("PRODUCT")
-            .entityId(1L)
-            .build();
+                .id(1L)
+                .entityType("PRODUCT")
+                .entityId(1L)
+                .build();
 
         when(mediaRepository.findByEntityTypeAndEntityId("PRODUCT", 1L))
-            .thenReturn(List.of(media));
+                .thenReturn(List.of(media));
 
         // Act
         List<MediaResponse> response = mediaService.getMediaByEntity("PRODUCT", 1L);

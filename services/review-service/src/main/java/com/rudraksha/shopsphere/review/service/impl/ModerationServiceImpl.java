@@ -6,6 +6,7 @@ import com.rudraksha.shopsphere.review.service.ModerationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,7 +50,7 @@ public class ModerationServiceImpl implements ModerationService {
     @Override
     public boolean hasProfanity(String text) {
         if (text == null) return false;
-        
+
         String lowerText = text.toLowerCase();
         return PROFANITIES.stream().anyMatch(lowerText::contains);
     }
@@ -57,21 +58,21 @@ public class ModerationServiceImpl implements ModerationService {
     @Override
     public boolean isSpam(String text) {
         if (text == null) return false;
-        
+
         String lowerText = text.toLowerCase();
-        
+
         // Check for spam keywords
         long spamKeywordCount = SPAM_KEYWORDS.stream()
                 .filter(lowerText::contains)
                 .count();
-        
+
         // Check for excessive URLs
         long urlCount = text.split("http").length - 1;
-        
+
         // Check for excessive capital letters
         long capitalCount = text.chars().filter(Character::isUpperCase).count();
         double capitalRatio = text.length() > 0 ? (double) capitalCount / text.length() : 0;
-        
+
         return spamKeywordCount > 2 || urlCount > 2 || capitalRatio > 0.5;
     }
 

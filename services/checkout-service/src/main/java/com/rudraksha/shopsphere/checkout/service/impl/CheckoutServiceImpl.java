@@ -23,12 +23,12 @@ public class CheckoutServiceImpl implements CheckoutService {
     @Override
     public CheckoutResponse processCheckout(CheckoutRequest request) {
         log.info("Processing checkout for user: {}", request.getUserId());
-        
+
         String orderId = UUID.randomUUID().toString();
         BigDecimal totalAmount = calculateTotal(request);
-        
+
         boolean success = sagaOrchestrator.executeCheckoutSaga(orderId, request);
-        
+
         return CheckoutResponse.builder()
                 .orderId(orderId)
                 .userId(request.getUserId())
@@ -47,26 +47,26 @@ public class CheckoutServiceImpl implements CheckoutService {
     private BigDecimal calculateTotal(CheckoutRequest request) {
         try {
             BigDecimal total = BigDecimal.ZERO;
-            
+
             for (var item : request.getItems()) {
                 try {
                     CatalogClient.ProductResponse product = catalogClient.getProduct(item.getProductId());
                     if (product != null && product.price() != null) {
                         BigDecimal itemPrice = product.price().multiply(BigDecimal.valueOf(item.getQuantity()));
                         total = total.add(itemPrice);
-                        log.debug("Added item: productId={}, price={}, quantity={}", 
+                        log.debug("Added item: productId={}, price={}, quantity={}",
                                 item.getProductId(), product.price(), item.getQuantity());
                     } else {
                         log.warn("Invalid product response for productId: {}", item.getProductId());
                         total = total.add(BigDecimal.valueOf(item.getQuantity() * 100));
                     }
                 } catch (Exception e) {
-                    log.warn("Failed to fetch product details for productId: {}, using default pricing", 
+                    log.warn("Failed to fetch product details for productId: {}, using default pricing",
                             item.getProductId(), e);
                     total = total.add(BigDecimal.valueOf(item.getQuantity() * 100));
                 }
             }
-            
+
             log.info("Calculated total amount: {}", total);
             return total;
         } catch (Exception e) {

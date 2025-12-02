@@ -2,6 +2,7 @@ package com.rudraksha.shopsphere.search.service;
 
 import com.rudraksha.shopsphere.search.dto.SearchRequest;
 import com.rudraksha.shopsphere.search.dto.SearchResponse;
+
 import java.util.List;
 
 public interface SearchService {

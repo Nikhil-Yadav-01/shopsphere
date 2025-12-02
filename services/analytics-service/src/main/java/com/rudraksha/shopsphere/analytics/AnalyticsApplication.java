@@ -8,8 +8,8 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication
 @EnableDiscoveryClient
 @ComponentScan(basePackages = {
-    "com.rudraksha.shopsphere.analytics",
-    "com.rudraksha.shopsphere.shared.security"
+        "com.rudraksha.shopsphere.analytics",
+        "com.rudraksha.shopsphere.shared.security"
 })
 public class AnalyticsApplication {
     public static void main(String[] args) {

@@ -5,9 +5,9 @@ resource "aws_instance" "mongodb" {
   instance_type               = "t3.medium"
   key_name                    = aws_key_pair.deployer.key_name
   subnet_id                   = aws_subnet.private[0].id
-  vpc_security_group_ids      = [aws_security_group.backend.id, aws_security_group.database.id]
+  vpc_security_group_ids = [aws_security_group.backend.id, aws_security_group.database.id]
   associate_public_ip_address = false
-  
+
   root_block_device {
     volume_type           = "gp3"
     volume_size           = 30
@@ -20,8 +20,8 @@ resource "aws_instance" "mongodb" {
     mongo_password = var.mongo_password
   }))
 
-  monitoring                  = true
-  iam_instance_profile        = aws_iam_instance_profile.ec2_profile.name
+  monitoring           = true
+  iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
 
   tags = {
     Name = "${local.common_name}-mongodb"
@@ -57,22 +57,24 @@ resource "aws_launch_template" "backend" {
 
   network_interfaces {
     associate_public_ip_address = false
-    security_groups             = [aws_security_group.backend.id]
+    security_groups = [aws_security_group.backend.id]
     delete_on_termination       = true
   }
 
   user_data = base64encode(templatefile("${path.module}/scripts/backend-init.sh", {
-    docker_image_uri       = var.docker_image_uri
-    postgres_endpoint      = var.enable_rds ? aws_rds_instance.postgres[0].endpoint : "${aws_instance.mongodb[0].private_ip}:5432"
-    postgres_username      = var.postgres_username
-    postgres_password      = var.postgres_password
-    mongo_endpoint         = !var.enable_documentdb ? "${aws_instance.mongodb[0].private_ip}:27017" : "documentdb.example.com:27017"
-    mongo_username         = var.mongo_username
-    mongo_password         = var.mongo_password
-    jwt_secret             = var.jwt_secret
-    stripe_api_key         = var.stripe_api_key
-    stripe_webhook_secret  = var.stripe_webhook_secret
-    cloudwatch_log_group   = aws_cloudwatch_log_group.ecs.name
+    docker_image_uri      = var.docker_image_uri
+    postgres_endpoint     = var.enable_rds ? aws_rds_instance.postgres[0].endpoint :
+      "${aws_instance.mongodb[0].private_ip}:5432"
+    postgres_username     = var.postgres_username
+    postgres_password     = var.postgres_password
+    mongo_endpoint        = !var.enable_documentdb ? "${aws_instance.mongodb[0].private_ip}:27017" :
+      "documentdb.example.com:27017"
+    mongo_username        = var.mongo_username
+    mongo_password        = var.mongo_password
+    jwt_secret            = var.jwt_secret
+    stripe_api_key        = var.stripe_api_key
+    stripe_webhook_secret = var.stripe_webhook_secret
+    cloudwatch_log_group  = aws_cloudwatch_log_group.ecs.name
   }))
 
   tag_specifications {
@@ -88,10 +90,10 @@ resource "aws_launch_template" "backend" {
 }
 
 resource "aws_autoscaling_group" "backend" {
-  name                = "${local.common_name}-backend-asg"
-  vpc_zone_identifier = aws_subnet.private[*].id
-  target_group_arns   = [aws_lb_target_group.backend.arn]
-  health_check_type   = "ELB"
+  name                      = "${local.common_name}-backend-asg"
+  vpc_zone_identifier       = aws_subnet.private[*].id
+  target_group_arns = [aws_lb_target_group.backend.arn]
+  health_check_type         = "ELB"
   health_check_grace_period = 300
 
   min_size         = var.min_capacity
@@ -124,11 +126,11 @@ resource "aws_lb" "main" {
   name               = "${local.common_name}-alb"
   internal           = false
   load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
+  security_groups = [aws_security_group.alb.id]
   subnets            = aws_subnet.public[*].id
 
-  enable_deletion_protection = false
-  enable_http2              = true
+  enable_deletion_protection       = false
+  enable_http2                     = true
   enable_cross_zone_load_balancing = true
 
   tags = {
@@ -176,17 +178,17 @@ resource "aws_lb_listener" "http" {
 
 # CloudWatch Alarms for ALB
 resource "aws_cloudwatch_metric_alarm" "alb_target_health" {
-  count             = var.enable_monitoring ? 1 : 0
-  alarm_name        = "${local.common_name}-alb-unhealthy-hosts"
+  count               = var.enable_monitoring ? 1 : 0
+  alarm_name          = "${local.common_name}-alb-unhealthy-hosts"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
-  metric_name       = "UnHealthyHostCount"
-  namespace         = "AWS/ApplicationELB"
-  period            = 300
-  statistic         = "Average"
-  threshold         = 0
-  alarm_description = "Alert when ALB has unhealthy targets"
-  treat_missing_data = "notBreaching"
+  metric_name         = "UnHealthyHostCount"
+  namespace           = "AWS/ApplicationELB"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 0
+  alarm_description   = "Alert when ALB has unhealthy targets"
+  treat_missing_data  = "notBreaching"
 
   dimensions = {
     TargetGroup  = aws_lb_target_group.backend.arn_suffix
@@ -256,7 +258,7 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 
 # SSH Key Pair
 resource "aws_key_pair" "deployer" {
-  key_name   = "${local.common_name}-deployer"
+  key_name = "${local.common_name}-deployer"
   public_key = file("${path.module}/../.ssh/id_rsa.pub")
 
   tags = {
@@ -267,15 +269,15 @@ resource "aws_key_pair" "deployer" {
 # Data source for Amazon Linux 2 AMI
 data "aws_ami" "amazon_linux_2" {
   most_recent = true
-  owners      = ["amazon"]
+  owners = ["amazon"]
 
   filter {
-    name   = "name"
+    name = "name"
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
 
   filter {
-    name   = "virtualization-type"
+    name = "virtualization-type"
     values = ["hvm"]
   }
 }

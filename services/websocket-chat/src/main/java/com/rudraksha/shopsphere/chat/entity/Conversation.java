@@ -5,13 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "conversation", indexes = {
-    @Index(name = "idx_user1_id", columnList = "user1_id"),
-    @Index(name = "idx_user2_id", columnList = "user2_id"),
-    @Index(name = "idx_created_at", columnList = "created_at")
+        @Index(name = "idx_user1_id", columnList = "user1_id"),
+        @Index(name = "idx_user2_id", columnList = "user2_id"),
+        @Index(name = "idx_created_at", columnList = "created_at")
 })
 @Data
 @NoArgsConstructor

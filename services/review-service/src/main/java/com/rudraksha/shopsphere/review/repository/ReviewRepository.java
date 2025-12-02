@@ -12,45 +12,59 @@ import java.util.Optional;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
-    /** Soft-delete aware findById **/
+    /**
+     * Soft-delete aware findById
+     **/
     Optional<Review> findByIdAndDeletedFalse(Long id);
 
-    /** Get reviews for product (only approved + not deleted) **/
+    /**
+     * Get reviews for product (only approved + not deleted)
+     **/
     Page<Review> findByProductIdAndModerationStatusAndDeletedFalse(
             Long productId,
             Review.ModerationStatus status,
             Pageable pageable
     );
 
-    /** Get reviews created by a user (not deleted) **/
+    /**
+     * Get reviews created by a user (not deleted)
+     **/
     Page<Review> findByUserIdAndDeletedFalse(Long userId, Pageable pageable);
 
-    /** Get pending/approved/rejected reviews (not deleted) **/
+    /**
+     * Get pending/approved/rejected reviews (not deleted)
+     **/
     Page<Review> findByModerationStatusAndDeletedFalse(
             Review.ModerationStatus status,
             Pageable pageable
     );
 
-    /** Rating aggregation **/
+    /**
+     * Rating aggregation
+     **/
     @Query("""
-           SELECT AVG(r.rating) 
-           FROM Review r 
-           WHERE r.productId = :productId 
-             AND r.moderationStatus = 'APPROVED'
-             AND r.deleted = false
-           """)
+            SELECT AVG(r.rating) 
+            FROM Review r 
+            WHERE r.productId = :productId 
+              AND r.moderationStatus = 'APPROVED'
+              AND r.deleted = false
+            """)
     Double getAverageRating(Long productId);
 
-    /** Review count **/
+    /**
+     * Review count
+     **/
     @Query("""
-           SELECT COUNT(r) 
-           FROM Review r 
-           WHERE r.productId = :productId 
-             AND r.moderationStatus = 'APPROVED'
-             AND r.deleted = false
-           """)
+            SELECT COUNT(r) 
+            FROM Review r 
+            WHERE r.productId = :productId 
+              AND r.moderationStatus = 'APPROVED'
+              AND r.deleted = false
+            """)
     Long getReviewCount(Long productId);
 
-    /** Prevent duplicate reviews for same user+product **/
+    /**
+     * Prevent duplicate reviews for same user+product
+     **/
     boolean existsByProductIdAndUserIdAndDeletedFalse(Long productId, Long userId);
 }

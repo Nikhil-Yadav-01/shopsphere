@@ -1,7 +1,7 @@
 package com.rudraksha.shopsphere.shipping.repository;
 
-import com.rudraksha.shopsphere.shipping.entity.Shipment;
 import com.rudraksha.shopsphere.shared.models.enums.ShipmentStatus;
+import com.rudraksha.shopsphere.shipping.entity.Shipment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

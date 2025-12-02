@@ -30,7 +30,8 @@ public class JsonSerde {
     public static class JsonSerializer implements Serializer<Object> {
 
         @Override
-        public void configure(Map<String, ?> configs, boolean isKey) {}
+        public void configure(Map<String, ?> configs, boolean isKey) {
+        }
 
         @Override
         public byte[] serialize(String topic, Object data) {
@@ -46,7 +47,8 @@ public class JsonSerde {
         }
 
         @Override
-        public void close() {}
+        public void close() {
+        }
     }
 
     public static class JsonDeserializer implements Deserializer<Object> {
@@ -79,6 +81,7 @@ public class JsonSerde {
         }
 
         @Override
-        public void close() {}
+        public void close() {
+        }
     }
 }

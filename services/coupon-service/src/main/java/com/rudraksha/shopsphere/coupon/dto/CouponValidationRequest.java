@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 
 @Data
@@ -14,15 +15,15 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class CouponValidationRequest {
-    
+
     @NotBlank(message = "Coupon code is required")
     private String code;
-    
+
     @NotNull(message = "Order total is required")
     @Positive(message = "Order total must be positive")
     private BigDecimal orderTotal;
-    
+
     private Long userId;
-    
+
     private String category;
 }

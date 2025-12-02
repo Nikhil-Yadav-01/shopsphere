@@ -10,9 +10,9 @@ import org.springframework.context.annotation.ComponentScan;
 @EnableDiscoveryClient
 @EnableFeignClients
 @ComponentScan(basePackages = {
-    "com.rudraksha.shopsphere.media",
-    "com.rudraksha.shopsphere.shared.security",
-    "com.rudraksha.shopsphere.shared.db"
+        "com.rudraksha.shopsphere.media",
+        "com.rudraksha.shopsphere.shared.security",
+        "com.rudraksha.shopsphere.shared.db"
 })
 public class MediaApplication {
     public static void main(String[] args) {

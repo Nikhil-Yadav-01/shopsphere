@@ -9,6 +9,7 @@ import com.rudraksha.shopsphere.recommendation.service.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
@@ -23,9 +24,9 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Override
     public RecommendationResponse getForYouRecommendations(Long userId, Integer limit) {
         log.info("Getting personalized recommendations for user {}", userId);
-        
+
         List<RecommendedProductItem> products = cfEngine.getRecommendations(userId, limit);
-        
+
         return RecommendationResponse.builder()
                 .type("forYou")
                 .products(products)
@@ -37,9 +38,9 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Override
     public RecommendationResponse getSimilarProducts(Long productId, Integer limit) {
         log.info("Getting similar products for product {}", productId);
-        
+
         List<RecommendedProductItem> products = similarEngine.getSimilarProducts(productId, limit);
-        
+
         return RecommendationResponse.builder()
                 .type("similar")
                 .products(products)
@@ -51,9 +52,9 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Override
     public RecommendationResponse getTrendingProducts(Integer limit) {
         log.info("Getting trending products");
-        
+
         List<RecommendedProductItem> products = trendingEngine.getTrendingProducts(limit);
-        
+
         return RecommendationResponse.builder()
                 .type("trending")
                 .products(products)
@@ -65,15 +66,15 @@ public class RecommendationServiceImpl implements RecommendationService {
     @Override
     public RecommendationResponse getPersonalizedRecommendations(Long userId, Integer limit) {
         log.info("Getting personalized recommendations for user {}", userId);
-        
+
         // Combine multiple engines for best recommendations
         List<RecommendedProductItem> cfProducts = cfEngine.getRecommendations(userId, limit / 2);
         List<RecommendedProductItem> trendingProducts = trendingEngine.getTrendingProducts(limit / 2);
-        
+
         List<RecommendedProductItem> combined = new java.util.ArrayList<>();
         combined.addAll(cfProducts);
         combined.addAll(trendingProducts);
-        
+
         return RecommendationResponse.builder()
                 .type("personalized")
                 .products(combined)

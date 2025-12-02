@@ -10,8 +10,8 @@ import org.springframework.context.annotation.ComponentScan;
 @EnableDiscoveryClient
 @EnableFeignClients
 @ComponentScan(basePackages = {
-    "com.rudraksha.shopsphere.chat",
-    "com.rudraksha.shopsphere.shared.security"
+        "com.rudraksha.shopsphere.chat",
+        "com.rudraksha.shopsphere.shared.security"
 })
 public class ChatApplication {
     public static void main(String[] args) {

@@ -12,11 +12,13 @@ public interface PaymentGateway {
             boolean success,
             String transactionId,
             String gatewayResponse
-    ) {}
+    ) {
+    }
 
     record RefundResult(
             boolean success,
             String refundId,
             String gatewayResponse
-    ) {}
+    ) {
+    }
 }

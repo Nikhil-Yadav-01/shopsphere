@@ -97,9 +97,12 @@ output "application_name" {
 output "connection_strings" {
   description = "Connection strings for databases and services"
   value = {
-    api_gateway    = "http://${aws_lb.main.dns_name}"
-    postgres       = var.enable_rds ? "postgresql://${var.postgres_username}:${var.postgres_password}@${aws_rds_instance.postgres[0].address}:5432/shopsphere" : "EC2-based"
-    mongodb        = !var.enable_documentdb ? "mongodb://${var.mongo_username}:${var.mongo_password}@${aws_instance.mongodb[0].private_ip}:27017" : "DocumentDB"
+    api_gateway = "http://${aws_lb.main.dns_name}"
+    postgres    = var.enable_rds ?
+      "postgresql://${var.postgres_username}:${var.postgres_password}@${aws_rds_instance.postgres[0].address}:5432/shopsphere"
+      : "EC2-based"
+    mongodb     = !var.enable_documentdb ?
+      "mongodb://${var.mongo_username}:${var.mongo_password}@${aws_instance.mongodb[0].private_ip}:27017" : "DocumentDB"
   }
   sensitive = true
 }
@@ -107,10 +110,10 @@ output "connection_strings" {
 output "deployment_info" {
   description = "Deployment information"
   value = {
-    account_id           = data.aws_caller_identity.current.account_id
-    availability_zones   = local.azs
-    nat_gateway_eips     = aws_eip.nat[*].public_ip
-    alb_public_ip        = aws_lb.main.zone_id
+    account_id         = data.aws_caller_identity.current.account_id
+    availability_zones = local.azs
+    nat_gateway_eips   = aws_eip.nat[*].public_ip
+    alb_public_ip      = aws_lb.main.zone_id
   }
 }
 

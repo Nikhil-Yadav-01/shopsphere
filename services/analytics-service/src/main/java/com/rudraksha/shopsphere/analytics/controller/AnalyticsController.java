@@ -28,7 +28,7 @@ public class AnalyticsController {
             @RequestBody Map<String, Object> eventData,
             @RequestHeader(value = "X-Forwarded-For", required = false) String ipAddress,
             @RequestHeader(value = "User-Agent", required = false) String userAgent) {
-        
+
         log.info("Ingest analytics event - Type: {}", eventType);
         analyticsService.ingestEvent(eventType, userId, sessionId, eventData, ipAddress, userAgent);
         return ResponseEntity.ok(ApiResponse.success("Event ingested successfully"));

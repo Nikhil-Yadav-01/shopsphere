@@ -44,24 +44,24 @@ public class MediaServiceImpl implements MediaService {
             String url = s3Service.uploadFile(s3Key, file);
 
             Media media = Media.builder()
-                .url(url)
-                .fileName(Objects.requireNonNull(file.getOriginalFilename()))
-                .fileType(extractFileExtension(file.getOriginalFilename()))
-                .fileSize(file.getSize())
-                .mediaType(determineMediaType(file.getContentType()))
-                .entityType(request.getEntityType())
-                .entityId(request.getEntityId())
-                .altText(request.getAltText())
-                .isPrimary(request.getIsPrimary())
-                .build();
+                    .url(url)
+                    .fileName(Objects.requireNonNull(file.getOriginalFilename()))
+                    .fileType(extractFileExtension(file.getOriginalFilename()))
+                    .fileSize(file.getSize())
+                    .mediaType(determineMediaType(file.getContentType()))
+                    .entityType(request.getEntityType())
+                    .entityId(request.getEntityId())
+                    .altText(request.getAltText())
+                    .isPrimary(request.getIsPrimary())
+                    .build();
 
             // If marking as primary, unmark other primaries
             if (Boolean.TRUE.equals(request.getIsPrimary())) {
                 mediaRepository.findByEntityTypeAndEntityId(request.getEntityType(), request.getEntityId())
-                    .forEach(m -> {
-                        m.setIsPrimary(false);
-                        mediaRepository.save(m);
-                    });
+                        .forEach(m -> {
+                            m.setIsPrimary(false);
+                            mediaRepository.save(m);
+                        });
             }
 
             Media savedMedia = mediaRepository.save(media);
@@ -78,7 +78,7 @@ public class MediaServiceImpl implements MediaService {
     public MediaResponse getMedia(Long mediaId) {
         log.info("Fetching media with ID: {}", mediaId);
         Media media = mediaRepository.findById(mediaId)
-            .orElseThrow(() -> new MediaNotFoundException(mediaId));
+                .orElseThrow(() -> new MediaNotFoundException(mediaId));
         return MediaResponse.from(media);
     }
 
@@ -87,9 +87,9 @@ public class MediaServiceImpl implements MediaService {
     public List<MediaResponse> getMediaByEntity(String entityType, Long entityId) {
         log.info("Fetching media for entity: {} with ID: {}", entityType, entityId);
         return mediaRepository.findByEntityTypeAndEntityId(entityType, entityId)
-            .stream()
-            .map(MediaResponse::from)
-            .collect(Collectors.toList());
+                .stream()
+                .map(MediaResponse::from)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -97,7 +97,7 @@ public class MediaServiceImpl implements MediaService {
     public MediaResponse getPrimaryMedia(String entityType, Long entityId) {
         log.info("Fetching primary media for entity: {} with ID: {}", entityType, entityId);
         Media media = mediaRepository.findPrimaryByEntityTypeAndEntityId(entityType, entityId)
-            .orElseThrow(() -> new MediaNotFoundException("Primary media not found for entity"));
+                .orElseThrow(() -> new MediaNotFoundException("Primary media not found for entity"));
         return MediaResponse.from(media);
     }
 
@@ -105,7 +105,7 @@ public class MediaServiceImpl implements MediaService {
     public MediaResponse updateMedia(Long mediaId, UpdateMediaRequest request) {
         log.info("Updating media with ID: {}", mediaId);
         Media media = mediaRepository.findById(mediaId)
-            .orElseThrow(() -> new MediaNotFoundException(mediaId));
+                .orElseThrow(() -> new MediaNotFoundException(mediaId));
 
         if (request.getAltText() != null) {
             media.setAltText(request.getAltText());
@@ -114,12 +114,12 @@ public class MediaServiceImpl implements MediaService {
         if (request.getIsPrimary() != null && request.getIsPrimary()) {
             // Unmark other primaries
             mediaRepository.findByEntityTypeAndEntityId(media.getEntityType(), media.getEntityId())
-                .forEach(m -> {
-                    if (!m.getId().equals(mediaId)) {
-                        m.setIsPrimary(false);
-                        mediaRepository.save(m);
-                    }
-                });
+                    .forEach(m -> {
+                        if (!m.getId().equals(mediaId)) {
+                            m.setIsPrimary(false);
+                            mediaRepository.save(m);
+                        }
+                    });
             media.setIsPrimary(true);
         }
 
@@ -132,7 +132,7 @@ public class MediaServiceImpl implements MediaService {
     public void deleteMedia(Long mediaId) {
         log.info("Deleting media with ID: {}", mediaId);
         Media media = mediaRepository.findById(mediaId)
-            .orElseThrow(() -> new MediaNotFoundException(mediaId));
+                .orElseThrow(() -> new MediaNotFoundException(mediaId));
 
         try {
             // Delete from S3
@@ -150,7 +150,7 @@ public class MediaServiceImpl implements MediaService {
     public void deleteMediaByEntity(String entityType, Long entityId) {
         log.info("Deleting all media for entity: {} with ID: {}", entityType, entityId);
         List<Media> mediaList = mediaRepository.findByEntityTypeAndEntityId(entityType, entityId);
-        
+
         for (Media media : mediaList) {
             try {
                 s3Service.deleteFile(extractS3KeyFromUrl(media.getUrl()));
@@ -158,7 +158,7 @@ public class MediaServiceImpl implements MediaService {
                 log.warn("Failed to delete S3 file for media ID {}: {}", media.getId(), e.getMessage());
             }
         }
-        
+
         mediaRepository.deleteByEntityTypeAndEntityId(entityType, entityId);
         log.info("All media deleted for entity: {} with ID: {}", entityType, entityId);
     }
@@ -186,7 +186,7 @@ public class MediaServiceImpl implements MediaService {
 
     private boolean isValidContentType(String contentType) {
         if (contentType == null) return false;
-        
+
         for (String type : ALLOWED_IMAGE_TYPES) {
             if (contentType.equals(type)) return true;
         }
@@ -198,7 +198,7 @@ public class MediaServiceImpl implements MediaService {
 
     private Media.MediaType determineMediaType(String contentType) {
         if (contentType == null) return Media.MediaType.IMAGE;
-        
+
         if (contentType.startsWith("image/")) return Media.MediaType.IMAGE;
         if (contentType.startsWith("video/")) return Media.MediaType.VIDEO;
         return Media.MediaType.DOCUMENT;

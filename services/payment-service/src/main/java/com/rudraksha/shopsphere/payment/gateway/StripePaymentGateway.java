@@ -23,7 +23,7 @@ public class StripePaymentGateway implements PaymentGateway {
 
     @Override
     public PaymentResult processPayment(String paymentMethod, BigDecimal amount, String currency) {
-        log.info("Processing payment via Stripe: method={}, amount={}, currency={}", 
+        log.info("Processing payment via Stripe: method={}, amount={}, currency={}",
                 paymentMethod, amount, currency);
 
         String transactionId = generatePaymentId();

@@ -3,6 +3,7 @@ package com.rudraksha.shopsphere.recommendation.ml;
 import com.rudraksha.shopsphere.recommendation.dto.RecommendedProductItem;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +14,10 @@ public class CollaborativeFilteringEngine {
 
     public List<RecommendedProductItem> getRecommendations(Long userId, Integer limit) {
         log.info("Generating CF recommendations for user {}", userId);
-        
+
         // Mock implementation: Users like you also liked...
         List<RecommendedProductItem> recommendations = new ArrayList<>();
-        
+
         for (int i = 0; i < limit; i++) {
             recommendations.add(RecommendedProductItem.builder()
                     .productId((long) (100 + i))
@@ -29,7 +30,7 @@ public class CollaborativeFilteringEngine {
                     .reason("Users like you also liked this")
                     .build());
         }
-        
+
         return recommendations;
     }
 }

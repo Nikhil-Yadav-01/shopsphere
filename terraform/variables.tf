@@ -9,7 +9,7 @@ variable "environment" {
   type        = string
   default     = "dev"
   validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
+    condition = contains(["dev", "staging", "prod"], var.environment)
     error_message = "Environment must be dev, staging, or prod."
   }
 }
@@ -135,7 +135,7 @@ variable "docker_image_uri" {
 
 variable "tags" {
   description = "Common tags for all resources"
-  type        = map(string)
+  type = map(string)
   default = {
     Project     = "ShopSphere"
     ManagedBy   = "Terraform"
@@ -167,6 +167,6 @@ variable "backup_retention_days" {
 
 variable "allowed_ssh_cidr" {
   description = "CIDR blocks allowed for SSH access"
-  type        = list(string)
-  default     = ["0.0.0.0/0"]  # CHANGE THIS IN PRODUCTION
+  type = list(string)
+  default = ["0.0.0.0/0"]  # CHANGE THIS IN PRODUCTION
 }

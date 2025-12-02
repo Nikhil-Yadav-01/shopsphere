@@ -5,12 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "media", indexes = {
-    @Index(name = "idx_product_id", columnList = "product_id"),
-    @Index(name = "idx_entity_type", columnList = "entity_type")
+        @Index(name = "idx_product_id", columnList = "product_id"),
+        @Index(name = "idx_entity_type", columnList = "entity_type")
 })
 @Data
 @NoArgsConstructor
@@ -40,7 +41,7 @@ public class Media {
 
     @Column(nullable = false)
     private String entityType; // PRODUCT, REVIEW, CATEGORY
-    
+
     @Column(nullable = false)
     private Long entityId;
 

@@ -10,7 +10,7 @@ public class CheckoutSagaOrchestrator {
 
     public boolean executeCheckoutSaga(String orderId, CheckoutRequest request) {
         log.info("Executing checkout saga for order: {}", orderId);
-        
+
         try {
             reserveInventory(orderId, request);
             createOrder(orderId, request);

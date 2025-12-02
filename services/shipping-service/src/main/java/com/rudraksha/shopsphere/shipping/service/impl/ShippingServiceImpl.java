@@ -1,5 +1,6 @@
 package com.rudraksha.shopsphere.shipping.service.impl;
 
+import com.rudraksha.shopsphere.shared.models.enums.ShipmentStatus;
 import com.rudraksha.shopsphere.shipping.dto.request.CreateShipmentRequest;
 import com.rudraksha.shopsphere.shipping.dto.request.UpdateTrackingRequest;
 import com.rudraksha.shopsphere.shipping.dto.response.ShipmentResponse;
@@ -13,7 +14,6 @@ import com.rudraksha.shopsphere.shipping.mapper.ShippingMapper;
 import com.rudraksha.shopsphere.shipping.repository.ShipmentRepository;
 import com.rudraksha.shopsphere.shipping.repository.TrackingEventRepository;
 import com.rudraksha.shopsphere.shipping.service.ShippingService;
-import com.rudraksha.shopsphere.shared.models.enums.ShipmentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -44,7 +44,7 @@ public class ShippingServiceImpl implements ShippingService {
 
         // Create shipment
         ShippingAddress address = shippingMapper.toShippingAddress(request.getRecipientAddress());
-        
+
         Shipment shipment = Shipment.builder()
                 .orderId(request.getOrderId())
                 .trackingNumber(trackingNumber)

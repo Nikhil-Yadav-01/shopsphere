@@ -6,7 +6,10 @@ import com.rudraksha.shopsphere.user.dto.response.AddressResponse;
 import com.rudraksha.shopsphere.user.dto.response.UserResponse;
 import com.rudraksha.shopsphere.user.entity.Address;
 import com.rudraksha.shopsphere.user.entity.UserProfile;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.List;
 

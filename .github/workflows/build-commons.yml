@@ -2,13 +2,13 @@ name: Build Common Modules
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
     paths:
       - 'common-*/**'
       - 'pom.xml'
       - '.github/workflows/build-commons.yml'
   pull_request:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
     paths:
       - 'common-*/**'
       - 'pom.xml'

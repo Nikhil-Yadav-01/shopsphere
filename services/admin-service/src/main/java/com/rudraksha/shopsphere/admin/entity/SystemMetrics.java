@@ -5,12 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "system_metrics", indexes = {
-    @Index(name = "idx_metric_type", columnList = "metric_type"),
-    @Index(name = "idx_recorded_at", columnList = "recorded_at")
+        @Index(name = "idx_metric_type", columnList = "metric_type"),
+        @Index(name = "idx_recorded_at", columnList = "recorded_at")
 })
 @Data
 @NoArgsConstructor

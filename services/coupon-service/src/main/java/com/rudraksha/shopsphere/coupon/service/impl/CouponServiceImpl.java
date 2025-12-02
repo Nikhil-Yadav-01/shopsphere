@@ -5,10 +5,12 @@ import com.rudraksha.shopsphere.coupon.dto.CouponValidationRequest;
 import com.rudraksha.shopsphere.coupon.dto.CouponValidationResponse;
 import com.rudraksha.shopsphere.coupon.entity.Coupon;
 import com.rudraksha.shopsphere.coupon.entity.CouponRedemption;
-import com.rudraksha.shopsphere.coupon.exception.*;
+import com.rudraksha.shopsphere.coupon.exception.CouponExpiredException;
+import com.rudraksha.shopsphere.coupon.exception.CouponLimitExceededException;
+import com.rudraksha.shopsphere.coupon.exception.CouponNotFoundException;
 import com.rudraksha.shopsphere.coupon.mapper.CouponMapper;
-import com.rudraksha.shopsphere.coupon.repository.CouponRepository;
 import com.rudraksha.shopsphere.coupon.repository.CouponRedemptionRepository;
+import com.rudraksha.shopsphere.coupon.repository.CouponRepository;
 import com.rudraksha.shopsphere.coupon.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,7 +48,7 @@ public class CouponServiceImpl implements CouponService {
     public CouponResponse updateCoupon(Long id, CouponResponse dto) {
         Coupon coupon = couponRepository.findById(id)
                 .orElseThrow(() -> new CouponNotFoundException(dto.getCode(), id));
-        
+
         coupon.setDescription(dto.getDescription());
         coupon.setDiscountType(dto.getDiscountType());
         coupon.setDiscountValue(dto.getDiscountValue());
@@ -56,7 +59,7 @@ public class CouponServiceImpl implements CouponService {
         coupon.setIsActive(dto.getIsActive());
         coupon.setMaxUsesPerUser(dto.getMaxUsesPerUser());
         coupon.setApplicableCategories(dto.getApplicableCategories());
-        
+
         Coupon updated = couponRepository.save(coupon);
         log.info("Coupon updated: {}", updated.getCode());
         return couponMapper.couponToCouponResponse(updated);
@@ -165,7 +168,7 @@ public class CouponServiceImpl implements CouponService {
         if (coupon.getDiscountType() == Coupon.DiscountType.PERCENTAGE) {
             discount = orderTotal.multiply(coupon.getDiscountValue())
                     .divide(new BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP);
-            
+
             if (coupon.getMaxDiscount() != null && discount.compareTo(coupon.getMaxDiscount()) > 0) {
                 discount = coupon.getMaxDiscount();
             }

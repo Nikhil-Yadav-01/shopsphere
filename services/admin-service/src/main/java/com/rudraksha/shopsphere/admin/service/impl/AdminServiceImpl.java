@@ -30,15 +30,15 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public void logAuditAction(Long adminId, String action, String resourceType, Long resourceId, String details, String ipAddress) {
         log.info("Logging audit action - Admin: {}, Action: {}, Resource: {}/{}", adminId, action, resourceType, resourceId);
-        
+
         AdminAuditLog log = AdminAuditLog.builder()
-            .adminId(adminId)
-            .action(action)
-            .resourceType(resourceType)
-            .resourceId(resourceId)
-            .changeDetails(details)
-            .ipAddress(ipAddress)
-            .build();
+                .adminId(adminId)
+                .action(action)
+                .resourceType(resourceType)
+                .resourceId(resourceId)
+                .changeDetails(details)
+                .ipAddress(ipAddress)
+                .build();
 
         auditLogRepository.save(log);
         log.info("Audit log saved successfully");
@@ -49,7 +49,7 @@ public class AdminServiceImpl implements AdminService {
     public Page<AuditLogResponse> getAuditLogs(Long adminId, Pageable pageable) {
         log.info("Fetching audit logs for admin: {}", adminId);
         return auditLogRepository.findByAdminId(adminId, pageable)
-            .map(this::mapToResponse);
+                .map(this::mapToResponse);
     }
 
     @Override
@@ -57,7 +57,7 @@ public class AdminServiceImpl implements AdminService {
     public Page<AuditLogResponse> getAuditLogsByAction(String action, Pageable pageable) {
         log.info("Fetching audit logs for action: {}", action);
         return auditLogRepository.findByAction(action, pageable)
-            .map(this::mapToResponse);
+                .map(this::mapToResponse);
     }
 
     @Override
@@ -65,9 +65,9 @@ public class AdminServiceImpl implements AdminService {
     public List<AuditLogResponse> getAuditLogsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         log.info("Fetching audit logs between {} and {}", startDate, endDate);
         return auditLogRepository.findByDateRange(startDate, endDate)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -75,20 +75,20 @@ public class AdminServiceImpl implements AdminService {
     public List<AuditLogResponse> getAuditLogsByResource(String resourceType, Long resourceId) {
         log.info("Fetching audit logs for resource: {}/{}", resourceType, resourceId);
         return auditLogRepository.findByResource(resourceType, resourceId)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     public void recordSystemMetric(String metricType, Double value, String unit) {
         log.info("Recording system metric - Type: {}, Value: {} {}", metricType, value, unit);
-        
+
         SystemMetrics metric = SystemMetrics.builder()
-            .metricType(metricType)
-            .value(value)
-            .unit(unit)
-            .build();
+                .metricType(metricType)
+                .value(value)
+                .unit(unit)
+                .build();
 
         metricsRepository.save(metric);
         log.info("System metric recorded successfully");
@@ -99,9 +99,9 @@ public class AdminServiceImpl implements AdminService {
     public List<SystemMetricsResponse> getSystemMetrics(String metricType, LocalDateTime startTime, LocalDateTime endTime) {
         log.info("Fetching metrics - Type: {} between {} and {}", metricType, startTime, endTime);
         return metricsRepository.findMetricsByType(metricType, startTime, endTime)
-            .stream()
-            .map(this::mapMetricsToResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(this::mapMetricsToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -109,31 +109,31 @@ public class AdminServiceImpl implements AdminService {
     public List<SystemMetricsResponse> getRecentMetrics(LocalDateTime since) {
         log.info("Fetching recent metrics since: {}", since);
         return metricsRepository.findRecentMetrics(since)
-            .stream()
-            .map(this::mapMetricsToResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(this::mapMetricsToResponse)
+                .collect(Collectors.toList());
     }
 
     private AuditLogResponse mapToResponse(AdminAuditLog log) {
         return AuditLogResponse.builder()
-            .id(log.getId())
-            .adminId(log.getAdminId())
-            .action(log.getAction())
-            .resourceType(log.getResourceType())
-            .resourceId(log.getResourceId())
-            .changeDetails(log.getChangeDetails())
-            .ipAddress(log.getIpAddress())
-            .createdAt(log.getCreatedAt())
-            .build();
+                .id(log.getId())
+                .adminId(log.getAdminId())
+                .action(log.getAction())
+                .resourceType(log.getResourceType())
+                .resourceId(log.getResourceId())
+                .changeDetails(log.getChangeDetails())
+                .ipAddress(log.getIpAddress())
+                .createdAt(log.getCreatedAt())
+                .build();
     }
 
     private SystemMetricsResponse mapMetricsToResponse(SystemMetrics metric) {
         return SystemMetricsResponse.builder()
-            .id(metric.getId())
-            .metricType(metric.getMetricType())
-            .value(metric.getValue())
-            .unit(metric.getUnit())
-            .recordedAt(metric.getRecordedAt())
-            .build();
+                .id(metric.getId())
+                .metricType(metric.getMetricType())
+                .value(metric.getValue())
+                .unit(metric.getUnit())
+                .recordedAt(metric.getRecordedAt())
+                .build();
     }
 }

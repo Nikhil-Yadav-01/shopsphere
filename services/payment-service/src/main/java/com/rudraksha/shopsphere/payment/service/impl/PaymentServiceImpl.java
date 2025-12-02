@@ -7,8 +7,8 @@ import com.rudraksha.shopsphere.payment.dto.response.RefundResponse;
 import com.rudraksha.shopsphere.payment.entity.Payment;
 import com.rudraksha.shopsphere.payment.entity.Refund;
 import com.rudraksha.shopsphere.payment.events.producer.PaymentEventProducer;
-import com.rudraksha.shopsphere.payment.exception.PaymentNotFoundException;
 import com.rudraksha.shopsphere.payment.exception.InvalidPaymentStateException;
+import com.rudraksha.shopsphere.payment.exception.PaymentNotFoundException;
 import com.rudraksha.shopsphere.payment.gateway.PaymentGateway;
 import com.rudraksha.shopsphere.payment.repository.PaymentRepository;
 import com.rudraksha.shopsphere.payment.repository.RefundRepository;
@@ -260,10 +260,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     private void handlePaymentIntentFailed(com.fasterxml.jackson.databind.JsonNode data) {
         String transactionId = data.get("id").asText();
-        String lastPaymentError = data.has("last_payment_error") 
+        String lastPaymentError = data.has("last_payment_error")
                 ? data.get("last_payment_error").get("message").asText()
                 : "Unknown error";
-        log.info("Handling payment_intent.payment_failed: transactionId={}, error={}", 
+        log.info("Handling payment_intent.payment_failed: transactionId={}, error={}",
                 transactionId, lastPaymentError);
     }
 

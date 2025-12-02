@@ -2,7 +2,6 @@ package com.rudraksha.shopsphere.returns.events.producer;
 
 import com.rudraksha.shopsphere.returns.dto.response.ReturnResponse;
 import com.rudraksha.shopsphere.shared.kafka.EventPublisher;
-import com.rudraksha.shopsphere.shared.models.enums.EventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

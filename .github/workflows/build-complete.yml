@@ -2,9 +2,9 @@ name: Complete Build Pipeline
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
   pull_request:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
 
 jobs:
   build-commons:
@@ -113,7 +113,7 @@ jobs:
         run: mvn -B install -pl services/catalog-service,services/inventory-service,services/pricing-service -am -DskipTests
 
   build-commerce:
-    needs: [build-commons, build-data]
+    needs: [ build-commons, build-data ]
     runs-on: ubuntu-latest
     
     steps:
@@ -165,7 +165,7 @@ jobs:
         run: mvn -B install -pl services/notification-service,services/shipping-service,services/review-service,services/recommendation-service,services/search-service,services/media-service,services/coupon-service,services/returns-service,services/fraud-service,services/analytics-service,services/batch-service,services/admin-service,services/websocket-chat -am -DskipTests
 
   security-scan:
-    needs: [build-infrastructure, build-core, build-commerce, build-support]
+    needs: [ build-infrastructure, build-core, build-commerce, build-support ]
     runs-on: ubuntu-latest
     
     steps:
@@ -192,7 +192,7 @@ jobs:
           retention-days: 14
 
   final-status:
-    needs: [build-infrastructure, build-core, build-data, build-commerce, build-support, security-scan]
+    needs: [ build-infrastructure, build-core, build-data, build-commerce, build-support, security-scan ]
     runs-on: ubuntu-latest
     if: always()
     

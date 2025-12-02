@@ -11,8 +11,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "rmas", indexes = {
-    @Index(name = "idx_rma_number", columnList = "rma_number", unique = true),
-    @Index(name = "idx_rma_return_request_id", columnList = "return_request_id")
+        @Index(name = "idx_rma_number", columnList = "rma_number", unique = true),
+        @Index(name = "idx_rma_return_request_id", columnList = "return_request_id")
 })
 @Getter
 @Setter

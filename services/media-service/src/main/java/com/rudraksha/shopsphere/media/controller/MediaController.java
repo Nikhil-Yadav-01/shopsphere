@@ -30,20 +30,20 @@ public class MediaController {
             @RequestParam("entityId") Long entityId,
             @RequestParam(value = "altText", required = false) String altText,
             @RequestParam(value = "isPrimary", defaultValue = "false") Boolean isPrimary) {
-        
+
         log.info("Upload media request - entityType: {}, entityId: {}", entityType, entityId);
-        
+
         UploadMediaRequest request = UploadMediaRequest.builder()
-            .file(file)
-            .entityType(entityType)
-            .entityId(entityId)
-            .altText(altText)
-            .isPrimary(isPrimary)
-            .build();
+                .file(file)
+                .entityType(entityType)
+                .entityId(entityId)
+                .altText(altText)
+                .isPrimary(isPrimary)
+                .build();
 
         MediaResponse response = mediaService.uploadMedia(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success(response, "Media uploaded successfully"));
+                .body(ApiResponse.success(response, "Media uploaded successfully"));
     }
 
     @GetMapping("/{mediaId}")
@@ -57,7 +57,7 @@ public class MediaController {
     public ResponseEntity<ApiResponse<List<MediaResponse>>> getMediaByEntity(
             @PathVariable String entityType,
             @PathVariable Long entityId) {
-        
+
         log.info("Get media by entity request - entityType: {}, entityId: {}", entityType, entityId);
         List<MediaResponse> response = mediaService.getMediaByEntity(entityType, entityId);
         return ResponseEntity.ok(ApiResponse.success(response));
@@ -67,7 +67,7 @@ public class MediaController {
     public ResponseEntity<ApiResponse<MediaResponse>> getPrimaryMedia(
             @PathVariable String entityType,
             @PathVariable Long entityId) {
-        
+
         log.info("Get primary media request - entityType: {}, entityId: {}", entityType, entityId);
         MediaResponse response = mediaService.getPrimaryMedia(entityType, entityId);
         return ResponseEntity.ok(ApiResponse.success(response));
@@ -77,7 +77,7 @@ public class MediaController {
     public ResponseEntity<ApiResponse<MediaResponse>> updateMedia(
             @PathVariable Long mediaId,
             @RequestBody @Valid UpdateMediaRequest request) {
-        
+
         log.info("Update media request - mediaId: {}", mediaId);
         MediaResponse response = mediaService.updateMedia(mediaId, request);
         return ResponseEntity.ok(ApiResponse.success(response, "Media updated successfully"));
@@ -94,7 +94,7 @@ public class MediaController {
     public ResponseEntity<ApiResponse<Void>> deleteMediaByEntity(
             @PathVariable String entityType,
             @PathVariable Long entityId) {
-        
+
         log.info("Delete media by entity request - entityType: {}, entityId: {}", entityType, entityId);
         mediaService.deleteMediaByEntity(entityType, entityId);
         return ResponseEntity.ok(ApiResponse.success("Media deleted successfully"));
@@ -104,7 +104,7 @@ public class MediaController {
     public ResponseEntity<ApiResponse<String>> getUploadUrl(
             @RequestParam String fileName,
             @RequestParam(required = false, defaultValue = "image/jpeg") String contentType) {
-        
+
         log.info("Get upload URL request - fileName: {}", fileName);
         String uploadUrl = mediaService.getUploadUrl(fileName, contentType);
         return ResponseEntity.ok(ApiResponse.success(uploadUrl));

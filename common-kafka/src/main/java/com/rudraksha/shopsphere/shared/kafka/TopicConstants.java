@@ -2,7 +2,8 @@ package com.rudraksha.shopsphere.shared.kafka;
 
 public final class TopicConstants {
 
-    private TopicConstants() {}
+    private TopicConstants() {
+    }
 
     public static final String USER_EVENTS = "shopsphere.user.events";
     public static final String ORDER_EVENTS = "shopsphere.order.events";

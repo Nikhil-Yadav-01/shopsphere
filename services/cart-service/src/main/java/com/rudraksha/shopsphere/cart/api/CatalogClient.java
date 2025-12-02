@@ -14,12 +14,13 @@ public interface CatalogClient {
     ProductResponse getProduct(@PathVariable String productId);
 
     record ProductResponse(
-        String id,
-        String name,
-        String description,
-        BigDecimal price,
-        String imageUrl,
-        String category,
-        Map<String, Object> attributes
-    ) {}
+            String id,
+            String name,
+            String description,
+            BigDecimal price,
+            String imageUrl,
+            String category,
+            Map<String, Object> attributes
+    ) {
+    }
 }

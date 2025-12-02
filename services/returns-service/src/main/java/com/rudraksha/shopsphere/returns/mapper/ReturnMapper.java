@@ -1,9 +1,9 @@
 package com.rudraksha.shopsphere.returns.mapper;
 
-import com.rudraksha.shopsphere.returns.dto.response.ReturnResponse;
 import com.rudraksha.shopsphere.returns.dto.response.RMAResponse;
-import com.rudraksha.shopsphere.returns.entity.ReturnRequest;
+import com.rudraksha.shopsphere.returns.dto.response.ReturnResponse;
 import com.rudraksha.shopsphere.returns.entity.RMA;
+import com.rudraksha.shopsphere.returns.entity.ReturnRequest;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
+
 import java.util.List;
 
 @Data
@@ -26,7 +27,7 @@ public class CheckoutRequest {
     public static class CheckoutItem {
         @NotBlank(message = "Product ID is required")
         private String productId;
-        
+
         @NotNull(message = "Quantity is required")
         @Positive(message = "Quantity must be greater than 0")
         private Integer quantity;

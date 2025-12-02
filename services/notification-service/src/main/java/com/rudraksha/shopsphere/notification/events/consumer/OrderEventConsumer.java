@@ -15,13 +15,13 @@ public class OrderEventConsumer {
 
     public void handleOrderPlaced(String orderId, String userEmail) {
         log.info("Received order placed event for order: {}", orderId);
-        
+
         EmailRequest emailRequest = EmailRequest.builder()
                 .to(userEmail)
                 .subject("Order Confirmation - " + orderId)
                 .body("Your order has been placed successfully. Order ID: " + orderId)
                 .build();
-        
+
         emailService.sendEmail(emailRequest);
     }
 }

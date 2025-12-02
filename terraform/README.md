@@ -73,8 +73,8 @@ This directory contains Terraform configuration to deploy ShopSphere on AWS.
 ### AWS Requirements
 
 1. **AWS Account** with appropriate permissions
-   - EC2, RDS, VPC, Auto Scaling, CloudWatch, IAM
-   
+    - EC2, RDS, VPC, Auto Scaling, CloudWatch, IAM
+
 2. **S3 Bucket** for Terraform state (optional but recommended)
    ```bash
    aws s3 mb s3://shopsphere-terraform-state
@@ -187,68 +187,68 @@ aws ec2 describe-instances --filters "Name=tag:Name,Values=shopsphere-*" \
 
 ### Compute
 
-- **Application Load Balancer**: 
-  - Listens on port 80 (HTTP) and 443 (HTTPS - manual setup)
-  - Health checks every 30 seconds
-  - Sticky sessions enabled (24 hours)
+- **Application Load Balancer**:
+    - Listens on port 80 (HTTP) and 443 (HTTPS - manual setup)
+    - Health checks every 30 seconds
+    - Sticky sessions enabled (24 hours)
 
 - **Auto Scaling Group**:
-  - Minimum: 2 instances
-  - Desired: 2 instances
-  - Maximum: 4 instances
-  - Scales based on CPU and memory metrics
+    - Minimum: 2 instances
+    - Desired: 2 instances
+    - Maximum: 4 instances
+    - Scales based on CPU and memory metrics
 
 - **EC2 Instances**:
-  - Type: t3.medium (configurable)
-  - OS: Amazon Linux 2
-  - Storage: 30GB gp3 encrypted
-  - Monitoring: CloudWatch enabled
+    - Type: t3.medium (configurable)
+    - OS: Amazon Linux 2
+    - Storage: 30GB gp3 encrypted
+    - Monitoring: CloudWatch enabled
 
 ### Databases
 
 - **RDS PostgreSQL** (if enabled):
-  - Version: 16.1
-  - Instance class: db.t3.micro
-  - Storage: 20GB gp3 encrypted
-  - Multi-AZ: Yes (production only)
-  - Backups: 7 days retention
-  - Performance Insights: Enabled (prod)
+    - Version: 16.1
+    - Instance class: db.t3.micro
+    - Storage: 20GB gp3 encrypted
+    - Multi-AZ: Yes (production only)
+    - Backups: 7 days retention
+    - Performance Insights: Enabled (prod)
 
 - **MongoDB EC2** (if DocumentDB disabled):
-  - Container: Docker on EC2
-  - Storage: 30GB encrypted
-  - Private network access only
-  - Initialization with collections and indexes
+    - Container: Docker on EC2
+    - Storage: 30GB encrypted
+    - Private network access only
+    - Initialization with collections and indexes
 
 - **DocumentDB** (if enabled):
-  - AWS-managed MongoDB compatibility
-  - Multi-AZ deployment
-  - Automatic backups
+    - AWS-managed MongoDB compatibility
+    - Multi-AZ deployment
+    - Automatic backups
 
 ### Monitoring & Logging
 
 - **CloudWatch Log Group**: `/ecs/shopsphere-{env}`
 - **CloudWatch Alarms**:
-  - ALB unhealthy host count
-  - RDS CPU utilization
-  - RDS free storage space
+    - ALB unhealthy host count
+    - RDS CPU utilization
+    - RDS free storage space
 - **CloudWatch Agent**: On all EC2 instances
 
 ### Security
 
 - **Security Groups**:
-  - ALB: Ports 80/443 from anywhere
-  - Backend: Container ports from ALB only
-  - Database: PostgreSQL (5432) and MongoDB (27017) from backend only
+    - ALB: Ports 80/443 from anywhere
+    - Backend: Container ports from ALB only
+    - Database: PostgreSQL (5432) and MongoDB (27017) from backend only
 
 - **IAM Roles**:
-  - EC2 instances: CloudWatch, SSM, S3 access
-  - No hardcoded credentials
+    - EC2 instances: CloudWatch, SSM, S3 access
+    - No hardcoded credentials
 
 - **Encryption**:
-  - RDS: Encrypted at rest
-  - EBS volumes: Encrypted at rest
-  - Secrets: Managed via environment variables
+    - RDS: Encrypted at rest
+    - EBS volumes: Encrypted at rest
+    - Secrets: Managed via environment variables
 
 ## Managing Infrastructure
 
@@ -450,6 +450,7 @@ terraform fmt -recursive
 ## Support
 
 For issues or questions:
+
 1. Check the troubleshooting section
 2. Review Terraform logs with `TF_LOG=DEBUG`
 3. Check AWS CloudTrail for API errors

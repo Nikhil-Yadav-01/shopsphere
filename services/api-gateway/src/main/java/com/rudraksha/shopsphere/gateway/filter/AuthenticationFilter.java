@@ -59,11 +59,11 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
         ServerHttpRequest.Builder requestBuilder = request.mutate()
                 .header("X-User-Id", userId);
-        
+
         if (roles != null && !roles.isEmpty()) {
             requestBuilder.header("X-User-Roles", String.join(",", roles));
         }
-        
+
         ServerHttpRequest modifiedRequest = requestBuilder.build();
 
         return chain.filter(exchange.mutate().request(modifiedRequest).build());

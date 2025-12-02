@@ -105,6 +105,7 @@ Or use defaults (NOT recommended for production):
 Modify `compose.yaml` to:
 
 1. **Change database credentials**:
+
 ```yaml
 postgres:
   environment:
@@ -112,6 +113,7 @@ postgres:
 ```
 
 2. **Add more service replicas**:
+
 ```yaml
 services:
   auth-service:
@@ -120,6 +122,7 @@ services:
 ```
 
 3. **Mount volumes for code changes** (development):
+
 ```yaml
 auth-service:
   volumes:
@@ -379,11 +382,13 @@ For production deployment, use Kubernetes instead of Docker Compose. See [k8s/RE
 However, if you must use Docker Compose in production:
 
 1. **Use environment files for secrets**:
+
 ```bash
 docker-compose --env-file .env.production up -d
 ```
 
 2. **Enable restart policies**:
+
 ```yaml
 services:
   auth-service:
@@ -391,6 +396,7 @@ services:
 ```
 
 3. **Setup health checks** (already configured):
+
 ```yaml
 auth-service:
   healthcheck:
@@ -402,11 +408,13 @@ auth-service:
 ```
 
 4. **Use external volumes for databases**:
+
 ```bash
 docker volume create shopsphere-postgres-data
 ```
 
 5. **Setup logging driver**:
+
 ```yaml
 services:
   auth-service:

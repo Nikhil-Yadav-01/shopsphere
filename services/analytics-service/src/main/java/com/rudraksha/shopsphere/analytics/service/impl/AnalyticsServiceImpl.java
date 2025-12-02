@@ -27,15 +27,15 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         log.info("Ingesting analytics event - Type: {}, User: {}, Session: {}", eventType, userId, sessionId);
 
         AnalyticsEvent event = AnalyticsEvent.builder()
-            .eventType(eventType)
-            .userId(userId)
-            .sessionId(sessionId)
-            .eventData(eventData)
-            .ipAddress(ipAddress)
-            .userAgent(userAgent)
-            .timestamp(LocalDateTime.now())
-            .processed(false)
-            .build();
+                .eventType(eventType)
+                .userId(userId)
+                .sessionId(sessionId)
+                .eventData(eventData)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .timestamp(LocalDateTime.now())
+                .processed(false)
+                .build();
 
         analyticsEventRepository.save(event);
         log.info("Analytics event saved successfully");
@@ -46,9 +46,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     public List<AnalyticsResponse> getEventsByType(String eventType) {
         log.info("Fetching events of type: {}", eventType);
         return analyticsEventRepository.findByEventType(eventType)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -56,9 +56,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     public List<AnalyticsResponse> getUserEvents(Long userId, LocalDateTime startDate, LocalDateTime endDate) {
         log.info("Fetching user events - User: {}, From: {} to {}", userId, startDate, endDate);
         return analyticsEventRepository.findUserEventsInDateRange(userId, startDate, endDate)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -66,9 +66,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     public List<AnalyticsResponse> getRecentEvents(String eventType, LocalDateTime since) {
         log.info("Fetching recent events - Type: {}, Since: {}", eventType, since);
         return analyticsEventRepository.findRecentEventsByType(eventType, since)
-            .stream()
-            .map(this::mapToResponse)
-            .collect(Collectors.toList());
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -90,19 +90,19 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     public AnalyticsResponse getEventById(String eventId) {
         log.info("Fetching event by ID: {}", eventId);
         return analyticsEventRepository.findById(eventId)
-            .map(this::mapToResponse)
-            .orElseThrow(() -> new RuntimeException("Analytics event not found with ID: " + eventId));
+                .map(this::mapToResponse)
+                .orElseThrow(() -> new RuntimeException("Analytics event not found with ID: " + eventId));
     }
 
     private AnalyticsResponse mapToResponse(AnalyticsEvent event) {
         return AnalyticsResponse.builder()
-            .id(event.getId())
-            .eventType(event.getEventType())
-            .userId(event.getUserId())
-            .sessionId(event.getSessionId())
-            .eventData(event.getEventData())
-            .timestamp(event.getTimestamp())
-            .processed(event.isProcessed())
-            .build();
+                .id(event.getId())
+                .eventType(event.getEventType())
+                .userId(event.getUserId())
+                .sessionId(event.getSessionId())
+                .eventData(event.getEventData())
+                .timestamp(event.getTimestamp())
+                .processed(event.isProcessed())
+                .build();
     }
 }

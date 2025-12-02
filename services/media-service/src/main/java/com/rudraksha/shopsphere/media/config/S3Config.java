@@ -16,17 +16,17 @@ public class S3Config {
     public S3Client s3Client() {
         log.info("Initializing S3Client");
         return S3Client.builder()
-            .credentialsProvider(DefaultCredentialsProvider.create())
-            .region(Region.US_EAST_1)
-            .build();
+                .credentialsProvider(DefaultCredentialsProvider.create())
+                .region(Region.US_EAST_1)
+                .build();
     }
 
     @Bean
     public S3Presigner s3Presigner() {
         log.info("Initializing S3Presigner");
         return S3Presigner.builder()
-            .credentialsProvider(DefaultCredentialsProvider.create())
-            .region(Region.US_EAST_1)
-            .build();
+                .credentialsProvider(DefaultCredentialsProvider.create())
+                .region(Region.US_EAST_1)
+                .build();
     }
 }

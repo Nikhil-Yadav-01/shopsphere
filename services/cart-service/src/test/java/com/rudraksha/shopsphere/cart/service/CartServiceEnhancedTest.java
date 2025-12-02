@@ -6,7 +6,6 @@ import com.rudraksha.shopsphere.cart.dto.request.AddToCartRequest;
 import com.rudraksha.shopsphere.cart.dto.request.UpdateCartItemRequest;
 import com.rudraksha.shopsphere.cart.dto.response.CartResponse;
 import com.rudraksha.shopsphere.cart.entity.Cart;
-import com.rudraksha.shopsphere.cart.entity.CartItem;
 import com.rudraksha.shopsphere.cart.repository.CartRepository;
 import com.rudraksha.shopsphere.cart.service.impl.CartServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,14 +17,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -127,7 +125,7 @@ class CartServiceEnhancedTest {
                 .quantity(1)
                 .build();
 
-        var product = new CatalogClient.ProductResponse(productId, "Test Product", "description", 
+        var product = new CatalogClient.ProductResponse(productId, "Test Product", "description",
                 BigDecimal.valueOf(100), "image.jpg", "category", Map.of());
 
         when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));

@@ -4,8 +4,6 @@ import com.rudraksha.shopsphere.order.dto.request.CancelOrderRequest;
 import com.rudraksha.shopsphere.order.dto.request.CreateOrderRequest;
 import com.rudraksha.shopsphere.order.dto.response.OrderResponse;
 import com.rudraksha.shopsphere.order.entity.Order;
-import com.rudraksha.shopsphere.order.entity.OrderAddress;
-import com.rudraksha.shopsphere.order.entity.OrderItem;
 import com.rudraksha.shopsphere.order.exception.InvalidOrderStateException;
 import com.rudraksha.shopsphere.order.exception.OrderNotFoundException;
 import com.rudraksha.shopsphere.order.mapper.OrderMapper;
@@ -159,7 +157,7 @@ class OrderServiceImplTest {
         // Arrange
         UUID userId = UUID.randomUUID();
         Pageable pageable = PageRequest.of(0, 10);
-        
+
         Order order = Order.builder()
                 .id(UUID.randomUUID())
                 .userId(userId)
@@ -207,7 +205,7 @@ class OrderServiceImplTest {
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(orderMapper.toOrderResponse(any(Order.class))).thenReturn(expectedResponse);
-        
+
         // Act
         OrderResponse result = orderService.cancelOrder(orderId, request);
 
@@ -256,7 +254,7 @@ class OrderServiceImplTest {
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(orderMapper.toOrderResponse(any(Order.class))).thenReturn(expectedResponse);
-        
+
         // Act
         OrderResponse result = orderService.updateOrderStatus(orderId, "CONFIRMED");
 

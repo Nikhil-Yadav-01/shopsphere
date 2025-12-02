@@ -18,7 +18,7 @@ public final class PaginationUtils {
     public static Pageable createPageRequest(Integer page, Integer size, Sort sort) {
         int pageNumber = (page != null && page >= 0) ? page : DEFAULT_PAGE;
         int pageSize = (size != null && size > 0) ? Math.min(size, MAX_SIZE) : DEFAULT_SIZE;
-        
+
         if (sort != null && sort.isSorted()) {
             return PageRequest.of(pageNumber, pageSize, sort);
         }
@@ -26,9 +26,9 @@ public final class PaginationUtils {
     }
 
     public static Pageable createPageRequest(Integer page, Integer size, String sortField, Sort.Direction direction) {
-        Sort sort = (sortField != null && !sortField.isBlank()) 
-            ? Sort.by(direction != null ? direction : Sort.Direction.ASC, sortField)
-            : Sort.unsorted();
+        Sort sort = (sortField != null && !sortField.isBlank())
+                ? Sort.by(direction != null ? direction : Sort.Direction.ASC, sortField)
+                : Sort.unsorted();
         return createPageRequest(page, size, sort);
     }
 

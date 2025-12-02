@@ -1,6 +1,7 @@
 # 🧠 Complete AI Agent Guide for ShopSphere
 
-This unified guide contains **all instructions** the AI Agent in VS Code needs to successfully read, build, validate, secure, test, commit, push, and automate the ShopSphere backend using GitHub Actions.
+This unified guide contains **all instructions** the AI Agent in VS Code needs to successfully read, build, validate,
+secure, test, commit, push, and automate the ShopSphere backend using GitHub Actions.
 
 It merges:
 
@@ -54,17 +55,17 @@ Set up CI so the project builds, tests, scans, and reports automatically on ever
 2. Use latest supported versions of Java + Maven
 3. Include steps:
 
-   * Checkout
-   * Set up Java 17
-   * Cache Maven repo
-   * Run build:
+    * Checkout
+    * Set up Java 17
+    * Cache Maven repo
+    * Run build:
 
-     ```bash
-     mvn -B clean verify
-     ```
-   * Run OWASP dependency checks
-   * Run tests
-   * Upload test results (optional)
+      ```bash
+      mvn -B clean verify
+      ```
+    * Run OWASP dependency checks
+    * Run tests
+    * Upload test results (optional)
 4. Commit with message:
 
    ```
@@ -110,11 +111,11 @@ Agent must **not build locally**. Only rely on GitHub.
 * Ensure CI builds successfully
 * If it fails:
 
-  * Analyse logs
-  * Fix code or config
-  * Commit fixes
-  * Push again
-  * Re-check CI pipeline
+    * Analyse logs
+    * Fix code or config
+    * Commit fixes
+    * Push again
+    * Re-check CI pipeline
 
 ## Validation
 
@@ -143,9 +144,9 @@ For repos with `k8s/` folder:
 1. Validate YAML format
 2. Check:
 
-   * probes
-   * ports
-   * selectors
+    * probes
+    * ports
+    * selectors
 3. Optionally add CI validation using:
 
    ```bash
@@ -291,14 +292,14 @@ Agent will generate and maintain Terraform modules for:
 * **IAM roles** (SSM, EC2 access)
 * **EC2 instances** for:
 
-  * Backend service
-  * PostgreSQL DB (option: RDS)
-  * MongoDB instance
+    * Backend service
+    * PostgreSQL DB (option: RDS)
+    * MongoDB instance
 * **User-data scripts** to auto-install:
 
-  * Docker
-  * Docker Compose
-  * Java (if needed)
+    * Docker
+    * Docker Compose
+    * Java (if needed)
 
 ### 2. Deployment Architecture
 
@@ -366,15 +367,16 @@ Agent must automatically:
 ✔️ Suggest fixes
 ✔️ Trigger re-runs (optional)
 
-
 # ✅ COMPLETION STATUS
 
 ## Phase 0 — GitHub Actions Setup ✅ COMPLETE
+
 - Created `.github/workflows/ci.yml` with Maven build, Java 17, and OWASP dependency checks
 - Workflow triggers on push/PR to main/develop
 - Committed: `ci: add GitHub Actions pipeline for build & security`
 
 ## Phase 1 — Project Understanding ✅ COMPLETE
+
 - Scanned 13 microservices + 5 shared modules
 - Validated Maven multi-module structure (Spring Boot 3.2.0, Java 17)
 - Confirmed PostgreSQL + MongoDB database strategy
@@ -382,22 +384,25 @@ Agent must automatically:
 - All services compile and have proper controller→service→repository pattern
 
 ## Phase 2 — Cloud Build (CI-Only) ⏳ IN PROGRESS
+
 - GitHub Actions builds on every commit
 - Monitoring workflow runs for compilation success
 
 ## Phase 5 — Code Quality Enforcement ✅ COMPLETE
+
 ### Issues Fixed:
+
 1. **Null Safety** - Added null checks in AuthenticationFilter, CartService, PaymentService
-   - AuthenticationFilter: Safe JWT role handling
-   - CartService: Validate catalog/inventory client responses
-   - PaymentService: Null transaction ID validation
-   - JwtTokenProvider: Returns empty list instead of null
+    - AuthenticationFilter: Safe JWT role handling
+    - CartService: Validate catalog/inventory client responses
+    - PaymentService: Null transaction ID validation
+    - JwtTokenProvider: Returns empty list instead of null
 
 2. **Custom Exceptions** - 4 domain-specific exceptions created
-   - InventoryNotFoundException
-   - InsufficientStockException
-   - PaymentNotFoundException
-   - InvalidPaymentStateException
+    - InventoryNotFoundException
+    - InsufficientStockException
+    - PaymentNotFoundException
+    - InvalidPaymentStateException
 
 3. **Security** - Removed sensitive email body logging from EmailServiceImpl
 
@@ -408,12 +413,14 @@ Agent must automatically:
 6. **Error Handling** - Improved refund processing with proper state validation
 
 ### Commits Made:
+
 1. `refactor: improve null safety and use custom exceptions for better error handling`
 2. `refactor: externalize hardcoded values in StripePaymentGateway`
 3. `refactor: enhance error handling and security across payment and notification services`
 4. `docs: add comprehensive code quality report for Phase 5`
 
 ### Quality Improvements Summary:
+
 - ✅ Eliminated 5+ null pointer risks
 - ✅ Replaced generic exceptions with domain-specific ones
 - ✅ Enhanced input validation with messages
@@ -422,38 +429,41 @@ Agent must automatically:
 - ✅ Code Quality Grade: B+ (Production Ready)
 
 ## Phase 3 — Infrastructure Services ✅ COMPLETE
+
 ### Services Implemented:
+
 1. **Media Service** (Port 8086) - File upload & S3 integration
-   - 13 Java files, entity-repository-service-controller pattern
-   - S3 presigned URLs, multipart upload support
-   - Media type detection (IMAGE, VIDEO, DOCUMENT)
-   - Complete unit tests (6 test cases)
+    - 13 Java files, entity-repository-service-controller pattern
+    - S3 presigned URLs, multipart upload support
+    - Media type detection (IMAGE, VIDEO, DOCUMENT)
+    - Complete unit tests (6 test cases)
 
 2. **Admin Service** (Port 8089) - Admin controls & audit logging
-   - 9 Java files with audit logging infrastructure
-   - System metrics recording
-   - Date range and resource-specific queries
-   - Comprehensive admin action tracking
+    - 9 Java files with audit logging infrastructure
+    - System metrics recording
+    - Date range and resource-specific queries
+    - Comprehensive admin action tracking
 
 3. **Batch Service** (Port 8090) - Scheduled batch jobs
-   - 7 Java files with Spring Batch/Quartz
-   - 3 scheduled jobs (Nightly Report, Stock Sync, Price Sync)
-   - Job retry mechanism and status tracking
-   - Async execution with @Scheduled/@Async
+    - 7 Java files with Spring Batch/Quartz
+    - 3 scheduled jobs (Nightly Report, Stock Sync, Price Sync)
+    - Job retry mechanism and status tracking
+    - Async execution with @Scheduled/@Async
 
 4. **Analytics Service** (Port 8091) - Real-time event analytics
-   - 7 Java files with MongoDB document storage
-   - Event ingestion and aggregation
-   - User behavior tracking with sessions
-   - Time-range queries and event classification
+    - 7 Java files with MongoDB document storage
+    - Event ingestion and aggregation
+    - User behavior tracking with sessions
+    - Time-range queries and event classification
 
 5. **WebSocket Chat Service** (Port 8092) - Real-time messaging
-   - 11 Java files with STOMP/WebSocket protocol
-   - Conversation management and message persistence
-   - Unread message tracking
-   - Redis caching for online status
+    - 11 Java files with STOMP/WebSocket protocol
+    - Conversation management and message persistence
+    - Unread message tracking
+    - Redis caching for online status
 
 ### Implementation Details:
+
 - ✅ 68 files created (Java, config, migrations)
 - ✅ 4,200+ lines of production-ready code
 - ✅ All services with Flyway DB migrations
@@ -466,10 +476,12 @@ Agent must automatically:
 - ✅ Database indexing for performance
 
 ### Commits:
+
 - `feat: implement Priority 3 services - Media, Admin, Batch, Analytics, WebSocket Chat`
 - `docs: add comprehensive Priority 3 implementation documentation`
 
 ## Remaining Enhancements (Optional - Not Blocking)
+
 - Add integration tests for Admin, Batch, Analytics, Chat services
 - Add Docker/K8s manifests for all services
 - Implement webhook processing in Analytics service

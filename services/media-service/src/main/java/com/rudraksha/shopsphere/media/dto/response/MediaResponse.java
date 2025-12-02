@@ -29,18 +29,18 @@ public class MediaResponse {
 
     public static MediaResponse from(Media media) {
         return MediaResponse.builder()
-            .id(media.getId())
-            .url(media.getUrl())
-            .fileName(media.getFileName())
-            .fileType(media.getFileType())
-            .fileSize(media.getFileSize())
-            .mediaType(media.getMediaType().toString())
-            .entityType(media.getEntityType())
-            .entityId(media.getEntityId())
-            .altText(media.getAltText())
-            .isPrimary(media.getIsPrimary())
-            .createdAt(media.getCreatedAt())
-            .updatedAt(media.getUpdatedAt())
-            .build();
+                .id(media.getId())
+                .url(media.getUrl())
+                .fileName(media.getFileName())
+                .fileType(media.getFileType())
+                .fileSize(media.getFileSize())
+                .mediaType(media.getMediaType().toString())
+                .entityType(media.getEntityType())
+                .entityId(media.getEntityId())
+                .altText(media.getAltText())
+                .isPrimary(media.getIsPrimary())
+                .createdAt(media.getCreatedAt())
+                .updatedAt(media.getUpdatedAt())
+                .build();
     }
 }

@@ -7,8 +7,8 @@ import org.mapstruct.MappingConstants;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
 public interface CouponMapper {
-    
+
     CouponResponse couponToCouponResponse(Coupon coupon);
-    
+
     Coupon couponResponseToCoupon(CouponResponse couponResponse);
 }

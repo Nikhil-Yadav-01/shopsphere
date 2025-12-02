@@ -2,7 +2,7 @@ name: Build Commerce Services
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
     paths:
       - 'services/cart-service/**'
       - 'services/checkout-service/**'
@@ -12,7 +12,7 @@ on:
       - 'pom.xml'
       - '.github/workflows/build-commerce-services.yml'
   pull_request:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
     paths:
       - 'services/cart-service/**'
       - 'services/checkout-service/**'

@@ -25,7 +25,7 @@ public class PricingServiceImpl implements PricingService {
                 .discountPercentage(request.getDiscountPercentage())
                 .currency(request.getCurrency())
                 .build();
-        
+
         Price saved = priceRepository.save(price);
         return mapToResponse(saved);
     }
@@ -42,12 +42,12 @@ public class PricingServiceImpl implements PricingService {
     public PriceResponse updatePrice(String productId, CreatePriceRequest request) {
         Price price = priceRepository.findByProductId(productId)
                 .orElseThrow(() -> new RuntimeException("Price not found for product: " + productId));
-        
+
         price.setBasePrice(request.getBasePrice());
         price.setSellingPrice(request.getSellingPrice());
         price.setDiscountPercentage(request.getDiscountPercentage());
         price.setCurrency(request.getCurrency());
-        
+
         Price updated = priceRepository.save(price);
         return mapToResponse(updated);
     }

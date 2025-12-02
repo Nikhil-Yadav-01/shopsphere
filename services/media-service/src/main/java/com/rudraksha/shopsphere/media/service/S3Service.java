@@ -9,12 +9,10 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 
 @Service
@@ -33,14 +31,14 @@ public class S3Service {
 
     public String uploadFile(String key, MultipartFile file) throws IOException {
         log.info("Uploading file to S3: {}", key);
-        
+
         try {
             s3Client.putObject(PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build(), 
-                software.amazon.awssdk.core.sync.RequestBody.fromBytes(file.getBytes()));
-            
+                            .bucket(bucketName)
+                            .key(key)
+                            .build(),
+                    software.amazon.awssdk.core.sync.RequestBody.fromBytes(file.getBytes()));
+
             String url = String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, key);
             log.info("File uploaded successfully: {}", url);
             return url;
@@ -54,9 +52,9 @@ public class S3Service {
         log.info("Deleting file from S3: {}", key);
         try {
             s3Client.deleteObject(DeleteObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .build());
+                    .bucket(bucketName)
+                    .key(key)
+                    .build());
             log.info("File deleted successfully: {}", key);
         } catch (Exception e) {
             log.error("Error deleting file from S3: {}", e.getMessage(), e);
@@ -68,21 +66,21 @@ public class S3Service {
         log.info("Generating presigned upload URL for: {}", fileName);
         try {
             String key = String.format("media/uploads/%d-%s", System.currentTimeMillis(), fileName);
-            
+
             PutObjectRequest objectRequest = PutObjectRequest.builder()
-                .bucket(bucketName)
-                .key(key)
-                .contentType(contentType)
-                .build();
+                    .bucket(bucketName)
+                    .key(key)
+                    .contentType(contentType)
+                    .build();
 
             PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(15))
-                .putObjectRequest(objectRequest)
-                .build();
+                    .signatureDuration(Duration.ofMinutes(15))
+                    .putObjectRequest(objectRequest)
+                    .build();
 
             PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
             String presignedUrl = presignedRequest.url().toString();
-            
+
             log.info("Presigned URL generated successfully");
             return presignedUrl;
         } catch (Exception e) {

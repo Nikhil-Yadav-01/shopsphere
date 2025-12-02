@@ -15,7 +15,6 @@ import com.rudraksha.shopsphere.payment.repository.RefundRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -94,7 +93,7 @@ class PaymentServiceImplTest {
         assertThat(response).isNotNull();
         assertThat(response.getOrderId()).isEqualTo(orderId);
         assertThat(response.getAmount()).isEqualTo(BigDecimal.valueOf(100.00));
-        
+
         verify(paymentRepository, times(2)).save(any(Payment.class));
         verify(eventProducer).publishPaymentCompleted(any(Payment.class));
     }

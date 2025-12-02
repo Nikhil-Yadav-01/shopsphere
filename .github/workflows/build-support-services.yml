@@ -2,7 +2,7 @@ name: Build Support Services
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
     paths:
       - 'services/notification-service/**'
       - 'services/shipping-service/**'
@@ -21,7 +21,7 @@ on:
       - 'pom.xml'
       - '.github/workflows/build-support-services.yml'
   pull_request:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
     paths:
       - 'services/notification-service/**'
       - 'services/shipping-service/**'

@@ -27,7 +27,7 @@ public final class RetryUtil {
     }
 
     public static <T> T retry(Callable<T> operation, int maxAttempts, Duration delay,
-                               Predicate<Exception> retryOn) throws Exception {
+                              Predicate<Exception> retryOn) throws Exception {
         if (operation == null) {
             throw new IllegalArgumentException("Operation cannot be null");
         }
@@ -55,7 +55,7 @@ public final class RetryUtil {
     }
 
     public static <T> T retryWithBackoff(Callable<T> operation, int maxAttempts,
-                                          Duration initialDelay, double backoffMultiplier) throws Exception {
+                                         Duration initialDelay, double backoffMultiplier) throws Exception {
         if (operation == null) {
             throw new IllegalArgumentException("Operation cannot be null");
         }
@@ -86,7 +86,7 @@ public final class RetryUtil {
 
     @SafeVarargs
     public static <T> T retryOnExceptions(Callable<T> operation, int maxAttempts, Duration delay,
-                                           Class<? extends Exception>... retryableExceptions) throws Exception {
+                                          Class<? extends Exception>... retryableExceptions) throws Exception {
         Set<Class<? extends Exception>> retryable = Set.of(retryableExceptions);
         return retry(operation, maxAttempts, delay, e ->
                 retryable.stream().anyMatch(clazz -> clazz.isInstance(e))

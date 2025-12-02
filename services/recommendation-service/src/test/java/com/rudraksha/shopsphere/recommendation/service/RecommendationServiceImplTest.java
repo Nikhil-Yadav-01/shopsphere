@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -75,7 +76,7 @@ class RecommendationServiceImplTest {
         assertFalse(response.getProducts().isEmpty());
         assertTrue(response.getProducts().size() <= 10);
         response.getProducts().forEach(item ->
-            assertEquals("Trending now", item.getReason())
+                assertEquals("Trending now", item.getReason())
         );
     }
 
@@ -90,8 +91,8 @@ class RecommendationServiceImplTest {
 
     @Test
     void testRecordUserBehavior() {
-        assertDoesNotThrow(() -> 
-            recommendationService.recordUserBehavior(1L, 100L, "view")
+        assertDoesNotThrow(() ->
+                recommendationService.recordUserBehavior(1L, 100L, "view")
         );
     }
 

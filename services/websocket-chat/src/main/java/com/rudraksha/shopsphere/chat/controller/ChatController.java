@@ -31,7 +31,7 @@ public class ChatController {
         log.info("Get or create conversation request - users: {}, {}", user1Id, user2Id);
         Conversation conversation = chatService.getOrCreateConversation(user1Id, user2Id);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success("Conversation created or retrieved successfully", conversation));
+                .body(ApiResponse.success("Conversation created or retrieved successfully", conversation));
     }
 
     @PostMapping("/messages")
@@ -42,7 +42,7 @@ public class ChatController {
         log.info("Send message request - conversation: {}, sender: {}", conversationId, senderId);
         ChatMessageResponse response = chatService.sendMessage(conversationId, senderId, request.getContent());
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success("Message sent successfully", response));
+                .body(ApiResponse.success("Message sent successfully", response));
     }
 
     @GetMapping("/conversations/{conversationId}/messages")

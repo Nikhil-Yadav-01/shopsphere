@@ -2,7 +2,7 @@ name: Build Infrastructure Services
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
     paths:
       - 'services/discovery/**'
       - 'services/config-server/**'
@@ -11,7 +11,7 @@ on:
       - 'pom.xml'
       - '.github/workflows/build-infrastructure.yml'
   pull_request:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
     paths:
       - 'services/discovery/**'
       - 'services/config-server/**'
