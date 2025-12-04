@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: search-service
+  data:
+    elasticsearch:
+      url: http://${ELASTICSEARCH_HOST:localhost}:${ELASTICSEARCH_PORT:9200}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: search-service
+      auto-offset-reset: earliest
+
+server:
+  port: ${SERVER_PORT:8013}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info
+  endpoint:
+    health:
+      show-details: always
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
+  instance:
+    hostname: ${HOSTNAME:localhost}
+    prefer-ip-address: true
+
+logging:
+  level:
+    root: INFO
+    com.rudraksha.shopsphere: DEBUG

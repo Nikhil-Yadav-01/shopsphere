@@ -35,9 +35,9 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8002
+EXPOSE 8083
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8002/actuator/health || exit 1
+    CMD curl -f http://localhost:8083/actuator/health || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

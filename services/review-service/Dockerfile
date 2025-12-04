@@ -7,6 +7,7 @@ WORKDIR /build
 COPY pom.xml .
 COPY common-models ./common-models
 COPY common-utils ./common-utils
+COPY common-security ./common-security
 COPY common-kafka ./common-kafka
 
 # Copy service
@@ -35,9 +36,9 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8083
+EXPOSE 8012
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8083/actuator/health || exit 1
+    CMD curl -f http://localhost:8012/actuator/health || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

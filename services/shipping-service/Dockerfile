@@ -7,6 +7,7 @@ WORKDIR /build
 COPY pom.xml .
 COPY common-models ./common-models
 COPY common-utils ./common-utils
+COPY common-security ./common-security
 COPY common-kafka ./common-kafka
 COPY common-db ./common-db
 
@@ -36,9 +37,9 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8009
+EXPOSE 8003
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8009/actuator/health || exit 1
+    CMD curl -f http://localhost:8003/actuator/health || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

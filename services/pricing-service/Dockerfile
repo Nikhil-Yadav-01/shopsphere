@@ -7,7 +7,8 @@ WORKDIR /build
 COPY pom.xml .
 COPY common-models ./common-models
 COPY common-utils ./common-utils
-COPY common-kafka ./common-kafka
+COPY common-security ./common-security
+COPY common-db ./common-db
 
 # Copy service
 COPY services/pricing-service ./services/pricing-service
