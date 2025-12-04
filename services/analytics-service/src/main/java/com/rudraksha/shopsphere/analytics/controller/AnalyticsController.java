@@ -21,7 +21,7 @@ public class AnalyticsController {
     private final AnalyticsService analyticsService;
 
     @PostMapping("/events")
-    public ResponseEntity<ApiResponse<Void>> ingestEvent(
+    public ResponseEntity<ApiResponse<String>> ingestEvent(
             @RequestParam String eventType,
             @RequestParam Long userId,
             @RequestParam String sessionId,
