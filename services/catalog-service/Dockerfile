@@ -3,16 +3,17 @@ FROM maven:3.9-eclipse-temurin-17 AS builder
 
 WORKDIR /build
 
-# Copy parent POM and common modules
+# Copy entire project structure
 COPY pom.xml .
 COPY common-models ./common-models
 COPY common-utils ./common-utils
+COPY common-security ./common-security
 COPY common-kafka ./common-kafka
+COPY common-db ./common-db
+COPY shared-test ./shared-test
+COPY services ./services
 
-# Copy service
-COPY services/catalog-service ./services/catalog-service
-
-# Build the service
+# Build the specific service
 RUN mvn -B clean package -pl services/catalog-service -am -DskipTests
 
 # Runtime stage
