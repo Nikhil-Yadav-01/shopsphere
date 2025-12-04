@@ -38,7 +38,7 @@ class ReturnsControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Aut
     private ReturnsService returnsService;
 
     @Autowired

@@ -1,0 +1,748 @@
+version: '3.9'
+
+services:
+  # Infrastructure - PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: shopsphere-postgres
+    environment:
+      POSTGRES_USER: shopsphere
+      POSTGRES_PASSWORD: shopsphere_password
+      POSTGRES_DB: shopsphere
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shopsphere"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Infrastructure - MongoDB
+  mongodb:
+    image: mongo:7-alpine
+    container_name: shopsphere-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: shopsphere
+      MONGO_INITDB_ROOT_PASSWORD: shopsphere_password
+      MONGO_INITDB_DATABASE: shopsphere
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Infrastructure - Zookeeper
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: shopsphere-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Infrastructure - Kafka
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: shopsphere-kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Core Infrastructure - Discovery Server (Eureka)
+  discovery-server:
+    build:
+      context: .
+      dockerfile: services/discovery/Dockerfile
+    container_name: shopsphere-discovery
+    environment:
+      SPRING_APPLICATION_NAME: discovery
+      SERVER_PORT: 8761
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/status"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Core Infrastructure - Config Server
+  config-server:
+    build:
+      context: .
+      dockerfile: services/config-server/Dockerfile
+    container_name: shopsphere-config
+    environment:
+      SPRING_APPLICATION_NAME: config-server
+      SERVER_PORT: 8888
+    ports:
+      - "8888:8888"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Core Infrastructure - API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: shopsphere-gateway
+    environment:
+      SPRING_APPLICATION_NAME: api-gateway
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Core Services - Auth Service
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    container_name: shopsphere-auth
+    environment:
+      SPRING_APPLICATION_NAME: auth-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SERVER_PORT: 8001
+      JWT_SECRET: shopsphere-secret-key-change-in-production
+    ports:
+      - "8001:8001"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # User Service
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    container_name: shopsphere-user
+    environment:
+      SPRING_APPLICATION_NAME: user-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SERVER_PORT: 8010
+    ports:
+      - "8010:8010"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8010/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Catalog Service
+  catalog-service:
+    build:
+      context: .
+      dockerfile: services/catalog-service/Dockerfile
+    container_name: shopsphere-catalog
+    environment:
+      SPRING_APPLICATION_NAME: catalog-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATA_MONGODB_URI: mongodb://shopsphere:shopsphere_password@mongodb:27017/shopsphere?authSource=admin
+      SERVER_PORT: 8002
+    ports:
+      - "8002:8002"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Cart Service
+  cart-service:
+    build:
+      context: .
+      dockerfile: services/cart-service/Dockerfile
+    container_name: shopsphere-cart
+    environment:
+      SPRING_APPLICATION_NAME: cart-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SERVER_PORT: 8003
+    ports:
+      - "8003:8003"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Inventory Service
+  inventory-service:
+    build:
+      context: .
+      dockerfile: services/inventory-service/Dockerfile
+    container_name: shopsphere-inventory
+    environment:
+      SPRING_APPLICATION_NAME: inventory-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8004
+    ports:
+      - "8004:8004"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Order Service
+  order-service:
+    build:
+      context: .
+      dockerfile: services/order-service/Dockerfile
+    container_name: shopsphere-order
+    environment:
+      SPRING_APPLICATION_NAME: order-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8005
+    ports:
+      - "8005:8005"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Payment Service
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    container_name: shopsphere-payment
+    environment:
+      SPRING_APPLICATION_NAME: payment-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SERVER_PORT: 8006
+      STRIPE_API_KEY: sk_test_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_placeholder
+    ports:
+      - "8006:8006"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Checkout Service
+  checkout-service:
+    build:
+      context: .
+      dockerfile: services/checkout-service/Dockerfile
+    container_name: shopsphere-checkout
+    environment:
+      SPRING_APPLICATION_NAME: checkout-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SERVER_PORT: 8007
+    ports:
+      - "8007:8007"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8007/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    container_name: shopsphere-notification
+    environment:
+      SPRING_APPLICATION_NAME: notification-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8008
+      SMTP_HOST: localhost
+      SMTP_PORT: 587
+    ports:
+      - "8008:8008"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8008/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Shipping Service
+  shipping-service:
+    build:
+      context: .
+      dockerfile: services/shipping-service/Dockerfile
+    container_name: shopsphere-shipping
+    environment:
+      SPRING_APPLICATION_NAME: shipping-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8009
+    ports:
+      - "8009:8009"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8009/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Review Service
+  review-service:
+    build:
+      context: .
+      dockerfile: services/review-service/Dockerfile
+    container_name: shopsphere-review
+    environment:
+      SPRING_APPLICATION_NAME: review-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8083
+    ports:
+      - "8083:8083"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Fraud Service
+  fraud-service:
+    build:
+      context: .
+      dockerfile: services/fraud-service/Dockerfile
+    container_name: shopsphere-fraud
+    environment:
+      SPRING_APPLICATION_NAME: fraud-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8084
+    ports:
+      - "8084:8084"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Pricing Service
+  pricing-service:
+    build:
+      context: .
+      dockerfile: services/pricing-service/Dockerfile
+    container_name: shopsphere-pricing
+    environment:
+      SPRING_APPLICATION_NAME: pricing-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8085
+    ports:
+      - "8085:8085"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Media Service
+  media-service:
+    build:
+      context: .
+      dockerfile: services/media-service/Dockerfile
+    container_name: shopsphere-media
+    environment:
+      SPRING_APPLICATION_NAME: media-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SERVER_PORT: 8086
+    ports:
+      - "8086:8086"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Search Service
+  search-service:
+    build:
+      context: .
+      dockerfile: services/search-service/Dockerfile
+    container_name: shopsphere-search
+    environment:
+      SPRING_APPLICATION_NAME: search-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SERVER_PORT: 8087
+    ports:
+      - "8087:8087"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Recommendation Service
+  recommendation-service:
+    build:
+      context: .
+      dockerfile: services/recommendation-service/Dockerfile
+    container_name: shopsphere-recommendation
+    environment:
+      SPRING_APPLICATION_NAME: recommendation-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SERVER_PORT: 8088
+    ports:
+      - "8088:8088"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Admin Service
+  admin-service:
+    build:
+      context: .
+      dockerfile: services/admin-service/Dockerfile
+    container_name: shopsphere-admin
+    environment:
+      SPRING_APPLICATION_NAME: admin-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SERVER_PORT: 8089
+    ports:
+      - "8089:8089"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Batch Service
+  batch-service:
+    build:
+      context: .
+      dockerfile: services/batch-service/Dockerfile
+    container_name: shopsphere-batch
+    environment:
+      SPRING_APPLICATION_NAME: batch-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8090
+    ports:
+      - "8090:8090"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Analytics Service
+  analytics-service:
+    build:
+      context: .
+      dockerfile: services/analytics-service/Dockerfile
+    container_name: shopsphere-analytics
+    environment:
+      SPRING_APPLICATION_NAME: analytics-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATA_MONGODB_URI: mongodb://shopsphere:shopsphere_password@mongodb:27017/shopsphere?authSource=admin
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SERVER_PORT: 8091
+    ports:
+      - "8091:8091"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8091/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Coupon Service
+  coupon-service:
+    build:
+      context: .
+      dockerfile: services/coupon-service/Dockerfile
+    container_name: shopsphere-coupon
+    environment:
+      SPRING_APPLICATION_NAME: coupon-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+  # Returns Service
+  returns-service:
+    build:
+      context: .
+      dockerfile: services/returns-service/Dockerfile
+    container_name: shopsphere-returns
+    environment:
+      SPRING_APPLICATION_NAME: returns-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+      SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - shopsphere-network
+
+networks:
+  shopsphere-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  zookeeper_data:
+    driver: local
