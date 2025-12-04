@@ -1,0 +1,174 @@
+version: '3.9'
+
+services:
+
+  # ---------------------- PostgreSQL ----------------------
+  postgres:
+    image: postgres:16
+    container_name: shopsphere-postgres
+    environment:
+      POSTGRES_USER: shopsphere
+      POSTGRES_PASSWORD: shopsphere_password
+      POSTGRES_DB: shopsphere
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - shopsphere-network
+
+  # ---------------------- MongoDB -------------------------
+  mongodb:
+    image: mongo:7.0
+    container_name: shopsphere-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: shopsphere
+      MONGO_INITDB_ROOT_PASSWORD: shopsphere_password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Apache Kafka (KRaft Mode) ----------------------
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: shopsphere-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:29093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+
+      # Storage directories
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+
+      # Required
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    command: >
+      bash -c "
+      if [ ! -f /var/lib/kafka/data/meta.properties ]; then
+        kafka-storage.sh format --ignore-formatted -t $$(kafka-storage.sh random-uuid) -c /etc/kafka/kafka.properties;
+      fi;
+      kafka-server-start.sh /etc/kafka/kafka.properties
+      "
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Eureka Discovery Server ----------------------
+  discovery-server:
+    build:
+      context: .
+      dockerfile: services/discovery/Dockerfile
+    container_name: shopsphere-discovery
+    ports:
+      - "8761:8761"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Config Server ----------------------
+  config-server:
+    build:
+      context: .
+    container_name: shopsphere-config
+    depends_on:
+      - discovery-server
+    ports:
+      - "8888:8888"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- API Gateway ----------------------
+  api-gateway:
+    build:
+      context: .
+    container_name: shopsphere-gateway
+    depends_on:
+      - discovery-server
+      - config-server
+    ports:
+      - "8080:8080"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Auth Service ----------------------
+  auth-service:
+    build:
+      context: .
+    container_name: shopsphere-auth
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+    depends_on:
+      - postgres
+      - discovery-server
+    ports:
+      - "8001:8001"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- User Service ----------------------
+  user-service:
+    build:
+      context: .
+    container_name: shopsphere-user
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_DATASOURCE_USERNAME: shopsphere
+      SPRING_DATASOURCE_PASSWORD: shopsphere_password
+    depends_on:
+      - postgres
+      - discovery-server
+    ports:
+      - "8010:8010"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Catalog Service ----------------------
+  catalog-service:
+    build:
+      context: .
+    container_name: shopsphere-catalog
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://shopsphere:shopsphere_password@mongodb:27017
+    depends_on:
+      - mongodb
+      - discovery-server
+    ports:
+      - "8002:8002"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Inventory Service (Uses Kafka KRaft) ----------------------
+  inventory-service:
+    build:
+      context: .
+    container_name: shopsphere-inventory
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shopsphere
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      - postgres
+      - kafka
+      - discovery-server
+    ports:
+      - "8004:8004"
+    networks:
+      - shopsphere-network
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  kafka_data:
+
+networks:
+  shopsphere-network:
