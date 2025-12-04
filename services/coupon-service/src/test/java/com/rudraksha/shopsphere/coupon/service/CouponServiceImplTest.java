@@ -46,7 +46,6 @@ class CouponServiceImplTest {
     @BeforeEach
     void setUp() {
         testCoupon = Coupon.builder()
-                .id(1L)
                 .code("SAVE20")
                 .description("20% off")
                 .discountType(Coupon.DiscountType.PERCENTAGE)
@@ -58,6 +57,7 @@ class CouponServiceImplTest {
                 .validUntil(LocalDateTime.now().plusDays(30))
                 .isActive(true)
                 .build();
+        testCoupon.setId(1L);
 
         couponResponse = CouponResponse.builder()
                 .id(1L)
@@ -117,12 +117,12 @@ class CouponServiceImplTest {
     @Test
     void testValidateCoupon_Expired() {
         Coupon expiredCoupon = Coupon.builder()
-                .id(1L)
                 .code("EXPIRED")
                 .validFrom(LocalDateTime.now().minusDays(10))
                 .validUntil(LocalDateTime.now().minusDays(1))
                 .isActive(true)
                 .build();
+        expiredCoupon.setId(1L);
 
         CouponValidationRequest request = CouponValidationRequest.builder()
                 .code("EXPIRED")
