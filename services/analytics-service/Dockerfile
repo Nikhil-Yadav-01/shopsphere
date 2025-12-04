@@ -38,6 +38,6 @@ USER appuser
 EXPOSE 8091
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8091/actuator/health || exit 1
+    CMD curl -f http://localhost:8091/analytics/actuator/health || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

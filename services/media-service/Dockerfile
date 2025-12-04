@@ -7,6 +7,7 @@ WORKDIR /build
 COPY pom.xml .
 COPY common-models ./common-models
 COPY common-utils ./common-utils
+COPY common-security ./common-security
 COPY common-db ./common-db
 
 # Copy service
@@ -38,6 +39,6 @@ USER appuser
 EXPOSE 8086
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8086/actuator/health || exit 1
+    CMD curl -f http://localhost:8086/media/actuator/health || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

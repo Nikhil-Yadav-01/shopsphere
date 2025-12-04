@@ -8,7 +8,6 @@ COPY pom.xml .
 COPY common-models ./common-models
 COPY common-utils ./common-utils
 COPY common-db ./common-db
-COPY common-kafka ./common-kafka
 
 # Copy service
 COPY services/batch-service ./services/batch-service
@@ -39,6 +38,6 @@ USER appuser
 EXPOSE 8090
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8090/actuator/health || exit 1
+    CMD curl -f http://localhost:8090/batch/actuator/health || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

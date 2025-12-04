@@ -7,13 +7,14 @@ WORKDIR /build
 COPY pom.xml .
 COPY common-models ./common-models
 COPY common-utils ./common-utils
-COPY common-kafka ./common-kafka
+COPY common-security ./common-security
+COPY common-db ./common-db
 
 # Copy service
-COPY services/recommendation-service ./services/recommendation-service
+COPY services/websocket-chat ./services/websocket-chat
 
 # Build the service
-RUN mvn -B clean package -pl services/recommendation-service -am -DskipTests
+RUN mvn -B clean package -pl services/websocket-chat -am -DskipTests
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine
@@ -28,16 +29,16 @@ RUN addgroup -g 1001 appuser && \
 RUN apk add --no-cache curl
 
 # Copy the built JAR from builder
-COPY --from=builder /build/services/recommendation-service/target/recommendation-service-*.jar app.jar
+COPY --from=builder /build/services/websocket-chat/target/websocket-chat-*.jar app.jar
 
 # Change ownership
 RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8011
+EXPOSE 8092
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8011/actuator/health || exit 1
+    CMD curl -f http://localhost:8092/chat/actuator/health || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

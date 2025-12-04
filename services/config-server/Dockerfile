@@ -3,7 +3,7 @@ FROM maven:3.9-eclipse-temurin-17 AS builder
 
 WORKDIR /build
 
-# Copy parent POM
+# Copy parent POM and common modules
 COPY pom.xml .
 COPY common-models ./common-models
 COPY common-utils ./common-utils

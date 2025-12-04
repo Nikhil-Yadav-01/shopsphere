@@ -1,0 +1,706 @@
+version: '3.9'
+
+services:
+
+  # ---------------------- PostgreSQL ----------------------
+  postgres:
+    image: postgres:16
+    container_name: shopsphere-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: shopsphere_password
+      POSTGRES_DB: shopsphere
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - shopsphere-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------- MongoDB -------------------------
+  mongodb:
+    image: mongo:7.0
+    container_name: shopsphere-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: shopsphere
+      MONGO_INITDB_ROOT_PASSWORD: shopsphere_password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - shopsphere-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------- Redis ----------------------
+  redis:
+    image: redis:7-alpine
+    container_name: shopsphere-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - shopsphere-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------- Elasticsearch (Optional for Search Service) ----------------------
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    container_name: shopsphere-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - shopsphere-network
+    healthcheck:
+      test: curl -s http://localhost:9200 >/dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------- Apache Kafka (KRaft Mode) ----------------------
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: shopsphere-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:29093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    command: >
+      bash -c "
+      if [ ! -f /var/lib/kafka/data/meta.properties ]; then
+        kafka-storage.sh format --ignore-formatted -t $$(kafka-storage.sh random-uuid) -c /etc/kafka/kafka.properties;
+      fi;
+      kafka-server-start.sh /etc/kafka/kafka.properties
+      "
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Eureka Discovery Server ----------------------
+  discovery-server:
+    build:
+      context: .
+      dockerfile: services/discovery/Dockerfile
+    container_name: shopsphere-discovery
+    ports:
+      - "8761:8761"
+    networks:
+      - shopsphere-network
+    environment:
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+
+  # ---------------------- Config Server ----------------------
+  config-server:
+    build:
+      context: .
+      dockerfile: services/config-server/Dockerfile
+    container_name: shopsphere-config
+    depends_on:
+      - discovery-server
+    ports:
+      - "8888:8888"
+    networks:
+      - shopsphere-network
+    environment:
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+
+  # ---------------------- API Gateway ----------------------
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: shopsphere-gateway
+    depends_on:
+      - discovery-server
+      - config-server
+    ports:
+      - "8080:8080"
+    networks:
+      - shopsphere-network
+    environment:
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+
+  # ---------------------- Auth Service ----------------------
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    container_name: shopsphere-auth
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_auth
+      DB_USERNAME: postgres
+      DB_PASSWORD: shopsphere_password
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8081:8081"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- User Service ----------------------
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    container_name: shopsphere-user
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_users
+      DB_USERNAME: postgres
+      DB_PASSWORD: shopsphere_password
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8082:8082"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Catalog Service ----------------------
+  catalog-service:
+    build:
+      context: .
+      dockerfile: services/catalog-service/Dockerfile
+    container_name: shopsphere-catalog
+    environment:
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+      MONGO_DB: shopsphere_catalog
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8083:8083"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Inventory Service ----------------------
+  inventory-service:
+    build:
+      context: .
+      dockerfile: services/inventory-service/Dockerfile
+    container_name: shopsphere-inventory
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_inventory
+      DB_USER: postgres
+      DB_PASSWORD: shopsphere_password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8084:8084"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Cart Service ----------------------
+  cart-service:
+    build:
+      context: .
+      dockerfile: services/cart-service/Dockerfile
+    container_name: shopsphere-cart
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      redis:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8085:8085"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Checkout Service ----------------------
+  checkout-service:
+    build:
+      context: .
+      dockerfile: services/checkout-service/Dockerfile
+    container_name: shopsphere-checkout
+    environment:
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      - discovery-server
+    ports:
+      - "8086:8086"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Notification Service ----------------------
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    container_name: shopsphere-notification
+    environment:
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      - discovery-server
+    ports:
+      - "8087:8087"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Coupon Service ----------------------
+  coupon-service:
+    build:
+      context: .
+      dockerfile: services/coupon-service/Dockerfile
+    container_name: shopsphere-coupon
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_coupon
+      DB_USER: postgres
+      DB_PASSWORD: shopsphere_password
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8088:8088"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Admin Service ----------------------
+  admin-service:
+    build:
+      context: .
+      dockerfile: services/admin-service/Dockerfile
+    container_name: shopsphere-admin
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_admin
+      DB_USER: postgres
+      DB_PASSWORD: shopsphere_password
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8089:8089"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Batch Service ----------------------
+  batch-service:
+    build:
+      context: .
+      dockerfile: services/batch-service/Dockerfile
+    container_name: shopsphere-batch
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_batch
+      DB_USER: postgres
+      DB_PASSWORD: shopsphere_password
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8090:8090"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Analytics Service ----------------------
+  analytics-service:
+    build:
+      context: .
+      dockerfile: services/analytics-service/Dockerfile
+    container_name: shopsphere-analytics
+    environment:
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+      MONGO_DB: shopsphere_analytics
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8091:8091"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Media Service ----------------------
+  media-service:
+    build:
+      context: .
+      dockerfile: services/media-service/Dockerfile
+    container_name: shopsphere-media
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_media
+      DB_USER: postgres
+      DB_PASSWORD: shopsphere_password
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+      SERVER_PORT: 8086
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8086:8086"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- WebSocket Chat Service ----------------------
+  websocket-chat:
+    build:
+      context: .
+      dockerfile: services/websocket-chat/Dockerfile
+    container_name: shopsphere-chat
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_chat
+      DB_USER: postgres
+      DB_PASSWORD: shopsphere_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+      SERVER_PORT: 8092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8092:8092"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Returns Service ----------------------
+  returns-service:
+    build:
+      context: .
+      dockerfile: services/returns-service/Dockerfile
+    container_name: shopsphere-returns
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_returns
+      DB_USER: postgres
+      DB_PASSWORD: shopsphere_password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8009:8009"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Shipping Service ----------------------
+  shipping-service:
+    build:
+      context: .
+      dockerfile: services/shipping-service/Dockerfile
+    container_name: shopsphere-shipping
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shipping_db
+      DB_USER: postgres
+      DB_PASSWORD: shopsphere_password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8003:8003"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Pricing Service ----------------------
+  pricing-service:
+    build:
+      context: .
+      dockerfile: services/pricing-service/Dockerfile
+    container_name: shopsphere-pricing
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: pricing_db
+      DB_USER: postgres
+      DB_PASSWORD: shopsphere_password
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8085:8085"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Fraud Service ----------------------
+  fraud-service:
+    build:
+      context: .
+      dockerfile: services/fraud-service/Dockerfile
+    container_name: shopsphere-fraud
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_fraud
+      DB_USER: postgres
+      DB_PASSWORD: shopsphere_password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+      SERVER_PORT: 8010
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8010:8010"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Recommendation Service ----------------------
+  recommendation-service:
+    build:
+      context: .
+      dockerfile: services/recommendation-service/Dockerfile
+    container_name: shopsphere-recommendation
+    environment:
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+      MONGO_DB: shopsphere_recommendations
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+      SERVER_PORT: 8011
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8011:8011"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Review Service ----------------------
+  review-service:
+    build:
+      context: .
+      dockerfile: services/review-service/Dockerfile
+    container_name: shopsphere-review
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_review
+      DB_USER: postgres
+      DB_PASSWORD: shopsphere_password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+      SERVER_PORT: 8012
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8012:8012"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Search Service ----------------------
+  search-service:
+    build:
+      context: .
+      dockerfile: services/search-service/Dockerfile
+    container_name: shopsphere-search
+    environment:
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+      SERVER_PORT: 8013
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8013:8013"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Order Service ----------------------
+  order-service:
+    build:
+      context: .
+      dockerfile: services/order-service/Dockerfile
+    container_name: shopsphere-order
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8002:8002"
+    networks:
+      - shopsphere-network
+
+  # ---------------------- Payment Service ----------------------
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    container_name: shopsphere-payment
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shopsphere_payment
+      DB_USERNAME: postgres
+      DB_PASSWORD: shopsphere_password
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_HOST: discovery-server
+      EUREKA_PORT: 8761
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      discovery-server:
+        condition: service_started
+    ports:
+      - "8087:8087"
+    networks:
+      - shopsphere-network
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  redis_data:
+  kafka_data:
+  elasticsearch_data:
+
+networks:
+  shopsphere-network:
+    driver: bridge

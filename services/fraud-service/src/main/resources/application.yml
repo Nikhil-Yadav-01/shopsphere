@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: fraud-service
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:shopsphere_fraud}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:[REDACTED:password]}
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: fraud-service
+      auto-offset-reset: earliest
+
+server:
+  port: ${SERVER_PORT:8010}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info
+  endpoint:
+    health:
+      show-details: always
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
+  instance:
+    hostname: ${HOSTNAME:localhost}
+    prefer-ip-address: true
+
+logging:
+  level:
+    root: INFO
+    com.rudraksha.shopsphere: DEBUG
