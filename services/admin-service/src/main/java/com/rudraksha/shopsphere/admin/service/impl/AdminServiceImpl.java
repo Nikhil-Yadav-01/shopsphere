@@ -31,7 +31,7 @@ public class AdminServiceImpl implements AdminService {
     public void logAuditAction(Long adminId, String action, String resourceType, Long resourceId, String details, String ipAddress) {
         log.info("Logging audit action - Admin: {}, Action: {}, Resource: {}/{}", adminId, action, resourceType, resourceId);
 
-        AdminAuditLog log = AdminAuditLog.builder()
+        AdminAuditLog adminAuditLog = AdminAuditLog.builder()
                 .adminId(adminId)
                 .action(action)
                 .resourceType(resourceType)
@@ -40,7 +40,7 @@ public class AdminServiceImpl implements AdminService {
                 .ipAddress(ipAddress)
                 .build();
 
-        auditLogRepository.save(log);
+        auditLogRepository.save(adminAuditLog);
         log.info("Audit log saved successfully");
     }
 
