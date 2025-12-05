@@ -367,6 +367,8 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: shopsphere_password
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EUREKA_HOST: discovery-server
       EUREKA_PORT: 8761

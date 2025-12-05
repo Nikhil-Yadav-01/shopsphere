@@ -6,10 +6,10 @@ spring:
     name: catalog-service
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/shopsphere_catalog}
+      uri: mongodb://${MONGO_USER:shopsphere}:${MONGO_PASSWORD:shopsphere_password}@${MONGO_HOST:mongodb}:${MONGO_PORT:27017}/${MONGO_DB:shopsphere_catalog}?authSource=admin
       auto-index-creation: true
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -17,7 +17,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+      defaultZone: ${EUREKA_URI:http://discovery-server:8761/eureka}
     register-with-eureka: true
     fetch-registry: true
   instance:
