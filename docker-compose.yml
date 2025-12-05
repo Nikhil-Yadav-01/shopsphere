@@ -76,7 +76,7 @@ services:
     networks:
       - shopsphere-network
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 5
