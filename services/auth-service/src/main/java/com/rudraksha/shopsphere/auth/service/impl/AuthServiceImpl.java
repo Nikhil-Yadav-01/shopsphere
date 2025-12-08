@@ -16,6 +16,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -46,27 +48,38 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse login(LoginRequest request) {
+        log.debug("Login attempt for email: {}", request.getEmail());
+        
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AuthException("Invalid email or password"));
+                .orElseThrow(() -> {
+                    log.warn("Login failed - user not found: {}", request.getEmail());
+                    return new AuthException("Invalid email or password");
+                });
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            log.warn("Login failed - invalid password for user: {}", request.getEmail());
             throw new AuthException("Invalid email or password");
         }
 
         if (!user.isEnabled()) {
+            log.warn("Login failed - account disabled for user: {}", request.getEmail());
             throw new AuthException("Account is disabled");
         }
 
         String accessToken = generateAccessToken(user);
         RefreshToken refreshToken = createRefreshToken(user);
-
+        
+        log.info("User logged in successfully: {}", request.getEmail());
         return buildAuthResponse(user, accessToken, refreshToken.getToken());
     }
 
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        log.debug("Registration attempt for email: {}", request.getEmail());
+        
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Registration failed - email already exists: {}", request.getEmail());
             throw new UserAlreadyExistsException("Email already registered");
         }
 
@@ -80,6 +93,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         user = userRepository.save(user);
+        log.info("User registered successfully: {}", request.getEmail());
 
         String accessToken = generateAccessToken(user);
         RefreshToken refreshToken = createRefreshToken(user);
@@ -90,10 +104,16 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public TokenResponse refreshToken(RefreshTokenRequest request) {
+        log.debug("Refresh token request received");
+        
         RefreshToken refreshToken = refreshTokenRepository.findByToken(request.getRefreshToken())
-                .orElseThrow(() -> new AuthException("Invalid refresh token"));
+                .orElseThrow(() -> {
+                    log.warn("Refresh token failed - token not found");
+                    return new AuthException("Invalid refresh token");
+                });
 
         if (!refreshToken.isValid()) {
+            log.warn("Refresh token failed - token is expired or revoked");
             throw new AuthException("Refresh token is expired or revoked");
         }
 
@@ -103,6 +123,8 @@ public class AuthServiceImpl implements AuthService {
 
         String newAccessToken = generateAccessToken(user);
         RefreshToken newRefreshToken = createRefreshToken(user);
+        
+        log.info("Token refreshed successfully for user: {}", user.getEmail());
 
         return TokenResponse.builder()
                 .accessToken(newAccessToken)
@@ -115,10 +137,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void logout(String token) {
+        log.debug("Logout request received");
         refreshTokenRepository.findByToken(token)
                 .ifPresent(rt -> {
                     rt.setRevoked(true);
                     refreshTokenRepository.save(rt);
+                    log.info("User logged out successfully");
                 });
     }
 
