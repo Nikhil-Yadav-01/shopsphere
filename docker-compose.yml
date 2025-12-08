@@ -76,7 +76,7 @@ services:
     networks:
       - shopsphere-network
     healthcheck:
-      test: ["CMD-SHELL", "kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -248,7 +248,7 @@ services:
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: shopsphere_inventory
-      DB_USER: postgres
+      DB_USERNAME: postgres
       DB_PASSWORD: shopsphere_password
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       EUREKA_HOST: discovery-server
@@ -349,27 +349,30 @@ services:
       EUREKA_PORT: 8761
 
   order-service:
-    build:
-      context: .
-      dockerfile: services/order-service/Dockerfile
-    container_name: shopsphere-order
-    depends_on:
-      postgres:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      discovery-server:
-        condition: service_healthy
-    ports:
-      - "8002:8002"
-    networks:
-      - shopsphere-network
-    environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      EUREKA_HOST: discovery-server
-      EUREKA_PORT: 8761
+   build:
+     context: .
+     dockerfile: services/order-service/Dockerfile
+   container_name: shopsphere-order
+   depends_on:
+     postgres:
+       condition: service_healthy
+     kafka:
+       condition: service_healthy
+     discovery-server:
+       condition: service_healthy
+   ports:
+     - "8002:8002"
+   networks:
+     - shopsphere-network
+   environment:
+     DB_HOST: postgres
+     DB_PORT: 5432
+     DB_NAME: order_db
+     DB_USERNAME: postgres
+     DB_PASSWORD: shopsphere_password
+     KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+     EUREKA_HOST: discovery-server
+     EUREKA_PORT: 8761
 
   payment-service:
     build:
