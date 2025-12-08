@@ -4,7 +4,7 @@ Generated: 2025-11-29
 
 === OVERVIEW ===
 This file contains a most-detailed file-by-file map (per microservice) for a full-featured Amazon-like backend (ShopSphere)
-implemented with Java 17  + Spring Boot, microservices architecture, Docker/Kubernetes/Ansible-friendly.
+implemented with Java 21  + Spring Boot, microservices architecture, Docker/Kubernetes/Ansible-friendly.
 Each service has its own project; shared modules are in a multi-module build. For each file listed there is a short description.
 
 --- TOP-LEVEL REPO LAYOUT ---
