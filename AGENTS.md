@@ -56,7 +56,7 @@ Set up CI so the project builds, tests, scans, and reports automatically on ever
 3. Include steps:
 
     * Checkout
-    * Set up Java 17
+    * Set up Java 21
     * Cache Maven repo
     * Run build:
 

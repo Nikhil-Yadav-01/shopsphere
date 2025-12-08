@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 RUN addgroup -g 1001 appuser && \
     adduser -u 1001 -G appuser -s /sbin/nologin -D appuser && \
