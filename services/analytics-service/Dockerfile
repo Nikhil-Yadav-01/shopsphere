@@ -3,7 +3,8 @@ RUN addgroup -g 1001 appuser && adduser -u 1001 -G appuser -s /sbin/nologin -D a
 WORKDIR /app
 USER appuser
 ARG JAR_FILE=services/analytics-service/target/analytics-service-*.jar
+ARG MACHINE_IP=127.0.0.1
 COPY ${JAR_FILE} app.jar
 EXPOSE 8091
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 CMD curl -f http://localhost:8091/analytics/actuator/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 CMD curl -f http://${MACHINE_IP}:8091/analytics/actuator/health || exit 1
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -8,10 +8,11 @@ WORKDIR /app
 USER appuser
 
 ARG JAR_FILE=services/payment-service/target/payment-service-*.jar
+ARG MACHINE_IP=127.0.0.1
 COPY ${JAR_FILE} app.jar
 
 EXPOSE 8087
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8087/actuator/health || exit 1
+    CMD curl -f http://${MACHINE_IP}:8087/actuator/health || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
