@@ -5,16 +5,17 @@ Updated all 25 service Dockerfiles to use a configurable machine IP address via 
 
 ## Environment Variable Created
 - **Variable Name**: `MACHINE_IP`
-- **Value**: `10.198.135.96` (from ipconfig)
+- **Value**: `157.38.3.74` (Public IP address)
 - **Type**: Environment variable (setx)
 - **Scope**: Windows system environment
 
-### Local IP Details
+### Network Details
 ```
-Wi-Fi Adapter
-IPv4 Address: 10.198.135.96
-Subnet Mask: 255.255.255.0
-Default Gateway: 10.198.135.78
+Public IP Address: 157.38.3.74
+Local IP (Wi-Fi Adapter):
+  IPv4 Address: 10.198.135.96
+  Subnet Mask: 255.255.255.0
+  Default Gateway: 10.198.135.78
 ```
 
 ## Changes Made
