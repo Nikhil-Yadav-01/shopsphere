@@ -1,5 +1,6 @@
 package com.rudraksha.shopsphere.auth.service.impl;
 
+import com.rudraksha.shopsphere.auth.config.TestConfig;
 import com.rudraksha.shopsphere.auth.dto.request.LoginRequest;
 import com.rudraksha.shopsphere.auth.dto.request.RefreshTokenRequest;
 import com.rudraksha.shopsphere.auth.dto.request.RegisterRequest;
@@ -14,36 +15,34 @@ import com.rudraksha.shopsphere.auth.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-@DisplayName("AuthServiceImpl Unit Tests")
+@DataJpaTest
+@Import({TestConfig.class, AuthServiceImpl.class})
+@ActiveProfiles("test")
+@DisplayName("AuthServiceImpl Integration Tests")
 class AuthServiceImplTest {
 
-    @Mock
+    @Autowired
+    private AuthServiceImpl authService;
+
+    @Autowired
     private UserRepository userRepository;
 
-    @Mock
+    @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 
-    @Mock
+    @Autowired
     private PasswordEncoder passwordEncoder;
-
-    @InjectMocks
-    private AuthServiceImpl authService;
 
     private User testUser;
     private LoginRequest loginRequest;
@@ -51,28 +50,30 @@ class AuthServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(authService, "jwtSecret", "mySecretKeyForJWTTokenGenerationMustBeAtLeast256BitsLong");
-        ReflectionTestUtils.setField(authService, "jwtExpirationMs", 3600000L);
-        ReflectionTestUtils.setField(authService, "refreshExpirationMs", 604800000L);
+        // Clear all data before each test
+        refreshTokenRepository.deleteAll();
+        userRepository.deleteAll();
 
+        // Create a test user
+        String rawPassword = "TestPassword123!";
         testUser = User.builder()
-                .id(UUID.randomUUID())
                 .email("test@shopsphere.com")
-                .password("hashedPassword")
+                .password(passwordEncoder.encode(rawPassword))
                 .firstName("Test")
                 .lastName("User")
                 .role(User.Role.CUSTOMER)
                 .enabled(true)
                 .build();
+        testUser = userRepository.save(testUser);
 
         loginRequest = LoginRequest.builder()
                 .email("test@shopsphere.com")
-                .password("TestPassword123!")
+                .password(rawPassword)
                 .build();
 
         registerRequest = RegisterRequest.builder()
                 .email("newuser@shopsphere.com")
-                .password("TestPassword123!")
+                .password("NewPassword123!")
                 .firstName("New")
                 .lastName("User")
                 .build();
@@ -81,14 +82,6 @@ class AuthServiceImplTest {
     @Test
     @DisplayName("Login with valid credentials should return AuthResponse")
     void testLoginSuccess() {
-        when(userRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches(loginRequest.getPassword(), testUser.getPassword())).thenReturn(true);
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> {
-            RefreshToken token = invocation.getArgument(0);
-            token.setId(UUID.randomUUID());
-            return token;
-        });
-
         AuthResponse response = authService.login(loginRequest);
 
         assertNotNull(response);
@@ -99,47 +92,44 @@ class AuthServiceImplTest {
         assertEquals(testUser.getEmail(), response.getEmail());
         assertEquals(testUser.getFirstName(), response.getFirstName());
         assertEquals(testUser.getLastName(), response.getLastName());
-
-        verify(userRepository, times(1)).findByEmail(loginRequest.getEmail());
-        verify(passwordEncoder, times(1)).matches(loginRequest.getPassword(), testUser.getPassword());
-        verify(refreshTokenRepository, times(1)).save(any(RefreshToken.class));
+        assertEquals("CUSTOMER", response.getRole());
     }
 
     @Test
     @DisplayName("Login with non-existent email should throw AuthException")
     void testLoginUserNotFound() {
-        when(userRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.empty());
+        LoginRequest invalidRequest = LoginRequest.builder()
+                .email("nonexistent@shopsphere.com")
+                .password("TestPassword123!")
+                .build();
 
         AuthException exception = assertThrows(AuthException.class, () -> {
-            authService.login(loginRequest);
+            authService.login(invalidRequest);
         });
 
         assertEquals("Invalid email or password", exception.getMessage());
-        verify(userRepository, times(1)).findByEmail(loginRequest.getEmail());
-        verify(passwordEncoder, never()).matches(any(), any());
     }
 
     @Test
     @DisplayName("Login with incorrect password should throw AuthException")
     void testLoginInvalidPassword() {
-        when(userRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches(loginRequest.getPassword(), testUser.getPassword())).thenReturn(false);
+        LoginRequest invalidRequest = LoginRequest.builder()
+                .email("test@shopsphere.com")
+                .password("WrongPassword123!")
+                .build();
 
         AuthException exception = assertThrows(AuthException.class, () -> {
-            authService.login(loginRequest);
+            authService.login(invalidRequest);
         });
 
         assertEquals("Invalid email or password", exception.getMessage());
-        verify(userRepository, times(1)).findByEmail(loginRequest.getEmail());
-        verify(passwordEncoder, times(1)).matches(loginRequest.getPassword(), testUser.getPassword());
     }
 
     @Test
     @DisplayName("Login with disabled user should throw AuthException")
     void testLoginDisabledUser() {
         testUser.setEnabled(false);
-        when(userRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches(loginRequest.getPassword(), testUser.getPassword())).thenReturn(true);
+        userRepository.save(testUser);
 
         AuthException exception = assertThrows(AuthException.class, () -> {
             authService.login(loginRequest);
@@ -149,21 +139,8 @@ class AuthServiceImplTest {
     }
 
     @Test
-    @DisplayName("Register with valid request should return AuthResponse")
+    @DisplayName("Register with valid request should return AuthResponse and persist user")
     void testRegisterSuccess() {
-        when(userRepository.existsByEmail(registerRequest.getEmail())).thenReturn(false);
-        when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("hashedPassword");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            User user = invocation.getArgument(0);
-            user.setId(UUID.randomUUID());
-            return user;
-        });
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> {
-            RefreshToken token = invocation.getArgument(0);
-            token.setId(UUID.randomUUID());
-            return token;
-        });
-
         AuthResponse response = authService.register(registerRequest);
 
         assertNotNull(response);
@@ -173,62 +150,65 @@ class AuthServiceImplTest {
         assertEquals(registerRequest.getEmail(), response.getEmail());
         assertEquals("CUSTOMER", response.getRole());
 
-        verify(userRepository, times(1)).existsByEmail(registerRequest.getEmail());
-        verify(passwordEncoder, times(1)).encode(registerRequest.getPassword());
-        verify(userRepository, times(1)).save(any(User.class));
+        // Verify user is persisted in database
+        assertTrue(userRepository.existsByEmail(registerRequest.getEmail()));
+        User savedUser = userRepository.findByEmail(registerRequest.getEmail()).orElse(null);
+        assertNotNull(savedUser);
+        assertEquals(registerRequest.getFirstName(), savedUser.getFirstName());
+        assertEquals(registerRequest.getLastName(), savedUser.getLastName());
+        assertTrue(savedUser.isEnabled());
     }
 
     @Test
     @DisplayName("Register with existing email should throw UserAlreadyExistsException")
     void testRegisterUserAlreadyExists() {
-        when(userRepository.existsByEmail(registerRequest.getEmail())).thenReturn(true);
-
         UserAlreadyExistsException exception = assertThrows(UserAlreadyExistsException.class, () -> {
-            authService.register(registerRequest);
+            authService.register(RegisterRequest.builder()
+                    .email("test@shopsphere.com")  // Existing user email
+                    .password("TestPassword123!")
+                    .firstName("New")
+                    .lastName("User")
+                    .build());
         });
 
         assertEquals("Email already registered", exception.getMessage());
-        verify(userRepository, times(1)).existsByEmail(registerRequest.getEmail());
-        verify(passwordEncoder, never()).encode(any());
     }
 
     @Test
     @DisplayName("Register should create user with CUSTOMER role by default")
     void testRegisterCreatesCustomerRole() {
-        when(userRepository.existsByEmail(registerRequest.getEmail())).thenReturn(false);
-        when(passwordEncoder.encode(registerRequest.getPassword())).thenReturn("hashedPassword");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            User user = invocation.getArgument(0);
-            user.setId(UUID.randomUUID());
-            return user;
-        });
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> {
-            RefreshToken token = invocation.getArgument(0);
-            token.setId(UUID.randomUUID());
-            return token;
-        });
-
         authService.register(registerRequest);
 
-        verify(userRepository).save(argThat(user -> user.getRole() == User.Role.CUSTOMER));
+        User savedUser = userRepository.findByEmail(registerRequest.getEmail()).orElse(null);
+        assertNotNull(savedUser);
+        assertEquals(User.Role.CUSTOMER, savedUser.getRole());
+    }
+
+    @Test
+    @DisplayName("Register should encode password correctly")
+    void testRegisterEncodesPassword() {
+        authService.register(registerRequest);
+
+        User savedUser = userRepository.findByEmail(registerRequest.getEmail()).orElse(null);
+        assertNotNull(savedUser);
+        assertNotEquals(registerRequest.getPassword(), savedUser.getPassword());
+        assertTrue(passwordEncoder.matches(registerRequest.getPassword(), savedUser.getPassword()));
     }
 
     @Test
     @DisplayName("Refresh token with valid token should return new TokenResponse")
     void testRefreshTokenSuccess() {
+        // Create a valid refresh token
         RefreshToken refreshToken = RefreshToken.builder()
-                .id(UUID.randomUUID())
-                .token("validToken")
+                .token(UUID.randomUUID().toString())
                 .user(testUser)
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .revoked(false)
                 .build();
-
-        when(refreshTokenRepository.findByToken("validToken")).thenReturn(Optional.of(refreshToken));
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        refreshToken = refreshTokenRepository.save(refreshToken);
 
         RefreshTokenRequest request = RefreshTokenRequest.builder()
-                .refreshToken("validToken")
+                .refreshToken(refreshToken.getToken())
                 .build();
 
         TokenResponse response = authService.refreshToken(request);
@@ -237,18 +217,19 @@ class AuthServiceImplTest {
         assertNotNull(response.getAccessToken());
         assertNotNull(response.getRefreshToken());
         assertEquals("Bearer", response.getTokenType());
+        assertEquals(3600L, response.getExpiresIn());
 
-        verify(refreshTokenRepository, times(1)).findByToken("validToken");
-        verify(refreshTokenRepository, times(2)).save(any(RefreshToken.class));
+        // Verify old token is revoked
+        RefreshToken oldToken = refreshTokenRepository.findByToken(refreshToken.getToken()).orElse(null);
+        assertNotNull(oldToken);
+        assertTrue(oldToken.isRevoked());
     }
 
     @Test
     @DisplayName("Refresh token with invalid token should throw AuthException")
     void testRefreshTokenInvalid() {
-        when(refreshTokenRepository.findByToken("invalidToken")).thenReturn(Optional.empty());
-
         RefreshTokenRequest request = RefreshTokenRequest.builder()
-                .refreshToken("invalidToken")
+                .refreshToken("nonexistent-token")
                 .build();
 
         AuthException exception = assertThrows(AuthException.class, () -> {
@@ -262,17 +243,15 @@ class AuthServiceImplTest {
     @DisplayName("Refresh token with expired token should throw AuthException")
     void testRefreshTokenExpired() {
         RefreshToken expiredToken = RefreshToken.builder()
-                .id(UUID.randomUUID())
-                .token("expiredToken")
+                .token(UUID.randomUUID().toString())
                 .user(testUser)
                 .expiresAt(LocalDateTime.now().minusDays(1))
                 .revoked(false)
                 .build();
-
-        when(refreshTokenRepository.findByToken("expiredToken")).thenReturn(Optional.of(expiredToken));
+        expiredToken = refreshTokenRepository.save(expiredToken);
 
         RefreshTokenRequest request = RefreshTokenRequest.builder()
-                .refreshToken("expiredToken")
+                .refreshToken(expiredToken.getToken())
                 .build();
 
         AuthException exception = assertThrows(AuthException.class, () -> {
@@ -286,17 +265,15 @@ class AuthServiceImplTest {
     @DisplayName("Refresh token with revoked token should throw AuthException")
     void testRefreshTokenRevoked() {
         RefreshToken revokedToken = RefreshToken.builder()
-                .id(UUID.randomUUID())
-                .token("revokedToken")
+                .token(UUID.randomUUID().toString())
                 .user(testUser)
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .revoked(true)
                 .build();
-
-        when(refreshTokenRepository.findByToken("revokedToken")).thenReturn(Optional.of(revokedToken));
+        revokedToken = refreshTokenRepository.save(revokedToken);
 
         RefreshTokenRequest request = RefreshTokenRequest.builder()
-                .refreshToken("revokedToken")
+                .refreshToken(revokedToken.getToken())
                 .build();
 
         AuthException exception = assertThrows(AuthException.class, () -> {
@@ -310,64 +287,105 @@ class AuthServiceImplTest {
     @DisplayName("Logout should revoke the refresh token")
     void testLogout() {
         RefreshToken refreshToken = RefreshToken.builder()
-                .id(UUID.randomUUID())
-                .token("logoutToken")
+                .token(UUID.randomUUID().toString())
                 .user(testUser)
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .revoked(false)
                 .build();
+        refreshToken = refreshTokenRepository.save(refreshToken);
 
-        when(refreshTokenRepository.findByToken("logoutToken")).thenReturn(Optional.of(refreshToken));
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        authService.logout(refreshToken.getToken());
 
-        authService.logout("logoutToken");
-
-        verify(refreshTokenRepository, times(1)).findByToken("logoutToken");
-        verify(refreshTokenRepository, times(1)).save(argThat(token -> token.isRevoked()));
+        RefreshToken revokedToken = refreshTokenRepository.findByToken(refreshToken.getToken()).orElse(null);
+        assertNotNull(revokedToken);
+        assertTrue(revokedToken.isRevoked());
     }
 
     @Test
     @DisplayName("Logout with non-existent token should not throw exception")
     void testLogoutNonExistentToken() {
-        when(refreshTokenRepository.findByToken("nonExistentToken")).thenReturn(Optional.empty());
-
-        assertDoesNotThrow(() -> authService.logout("nonExistentToken"));
-        verify(refreshTokenRepository, times(1)).findByToken("nonExistentToken");
-        verify(refreshTokenRepository, never()).save(any(RefreshToken.class));
+        assertDoesNotThrow(() -> authService.logout("nonexistent-token"));
     }
 
     @Test
     @DisplayName("JWT token should contain correct claims")
     void testJWTTokenClaims() {
-        when(userRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches(loginRequest.getPassword(), testUser.getPassword())).thenReturn(true);
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> {
-            RefreshToken token = invocation.getArgument(0);
-            token.setId(UUID.randomUUID());
-            return token;
-        });
-
         AuthResponse response = authService.login(loginRequest);
 
         assertNotNull(response.getAccessToken());
         assertTrue(response.getAccessToken().startsWith("eyJ"));
+        // JWT tokens are in format: header.payload.signature
+        String[] parts = response.getAccessToken().split("\\.");
+        assertEquals(3, parts.length);
     }
 
     @Test
-    @DisplayName("Login generates refresh token with correct expiration")
+    @DisplayName("Refresh token should have correct expiration")
     void testRefreshTokenExpiration() {
-        when(userRepository.findByEmail(loginRequest.getEmail())).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches(loginRequest.getPassword(), testUser.getPassword())).thenReturn(true);
-        when(refreshTokenRepository.save(any(RefreshToken.class))).thenAnswer(invocation -> {
-            RefreshToken token = invocation.getArgument(0);
-            token.setId(UUID.randomUUID());
-            return token;
+        AuthResponse response = authService.login(loginRequest);
+
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(response.getRefreshToken()).orElse(null);
+        assertNotNull(refreshToken);
+        assertTrue(refreshToken.getExpiresAt().isAfter(LocalDateTime.now()));
+    }
+
+    @Test
+    @DisplayName("Refresh token creates new valid token after refresh")
+    void testRefreshTokenCreatesValidNewToken() {
+        RefreshToken initialToken = RefreshToken.builder()
+                .token(UUID.randomUUID().toString())
+                .user(testUser)
+                .expiresAt(LocalDateTime.now().plusDays(7))
+                .revoked(false)
+                .build();
+        initialToken = refreshTokenRepository.save(initialToken);
+
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken(initialToken.getToken())
+                .build();
+
+        TokenResponse response = authService.refreshToken(request);
+
+        RefreshToken newToken = refreshTokenRepository.findByToken(response.getRefreshToken()).orElse(null);
+        assertNotNull(newToken);
+        assertFalse(newToken.isRevoked());
+        assertTrue(newToken.getExpiresAt().isAfter(LocalDateTime.now()));
+    }
+
+    @Test
+    @DisplayName("Multiple logins should create separate refresh tokens")
+    void testMultipleLoginsCreateSeparateTokens() {
+        AuthResponse response1 = authService.login(loginRequest);
+        AuthResponse response2 = authService.login(loginRequest);
+
+        assertNotEquals(response1.getRefreshToken(), response2.getRefreshToken());
+        assertTrue(refreshTokenRepository.findByToken(response1.getRefreshToken()).isPresent());
+        assertTrue(refreshTokenRepository.findByToken(response2.getRefreshToken()).isPresent());
+    }
+
+    @Test
+    @DisplayName("Successfully logged out token should not be usable for refresh")
+    void testLoggedOutTokenCannotBeRefreshed() {
+        RefreshToken refreshToken = RefreshToken.builder()
+                .token(UUID.randomUUID().toString())
+                .user(testUser)
+                .expiresAt(LocalDateTime.now().plusDays(7))
+                .revoked(false)
+                .build();
+        refreshToken = refreshTokenRepository.save(refreshToken);
+
+        // Logout
+        authService.logout(refreshToken.getToken());
+
+        // Try to refresh
+        RefreshTokenRequest request = RefreshTokenRequest.builder()
+                .refreshToken(refreshToken.getToken())
+                .build();
+
+        AuthException exception = assertThrows(AuthException.class, () -> {
+            authService.refreshToken(request);
         });
 
-        authService.login(loginRequest);
-
-        verify(refreshTokenRepository).save(argThat(token ->
-                token.getExpiresAt() != null && token.getExpiresAt().isAfter(LocalDateTime.now())
-        ));
+        assertEquals("Refresh token is expired or revoked", exception.getMessage());
     }
 }
